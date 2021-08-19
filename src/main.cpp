@@ -22,7 +22,13 @@ int main()
 
     //imshow("test", img);
 
-    OdometryFrameImplTMat<Mat> of (Mat());
+    OdometryFrameImpl * of_mat = new OdometryFrameImplTMat<Mat>(Mat());
+    of_mat->setImage(Mat());
+
+    OdometryFrameImpl * of_umat = new OdometryFrameImplTMat<UMat>(UMat());
+    of_umat->setImage(Mat());
+
+
 
     return 0;
 }

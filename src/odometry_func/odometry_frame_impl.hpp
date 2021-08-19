@@ -15,7 +15,7 @@ class OdometryFrameImpl
 public:
 	OdometryFrameImpl() {};
 	~OdometryFrameImpl() {};
-	//virtual void setImage(InputArray image) = 0;
+	virtual void setImage(InputArray image) = 0;
 
 private:
 
@@ -28,7 +28,7 @@ public:
 	OdometryFrameImplTMat(InputArray image = noArray());
 	~OdometryFrameImplTMat() {};
 
-	//virtual void setImage(InputArray image) override;
+	virtual void setImage(InputArray image) override;
 
 private:
 	TMat image;
@@ -40,17 +40,11 @@ OdometryFrameImplTMat<TMat>::OdometryFrameImplTMat(InputArray _image)
 	image = getTMat<TMat>(_image);
 };
 
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setImage(InputArray _image)
+{
+	image = getTMat<TMat>(_image);
+}
 
-/*
-template<>
-void OdometryFrameImplTMat<UMat>::setImage(InputArray _image)
-{
-	image = getTMat<UMat>(_image);
-}
-template<>
-void OdometryFrameImplTMat<Mat>::setImage(InputArray _image)
-{
-	image = getTMat<Mat>(_image);
-}
-*/
+
 #endif // !ODOMETRY_FRAME_IMPL
