@@ -25,6 +25,7 @@ void OdometryFrame::create(InputArray _image)
 	//bool allEmpty = _image.empty();
 	//bool useOcl = _image.isUMat();
 	//if (useOcl && !allEmpty)
+	//if (1)
 	//	this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(_image);
 	//else
 	//	this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(_image);
