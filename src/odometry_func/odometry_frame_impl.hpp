@@ -45,6 +45,18 @@ void OdometryFrameImplTMat<TMat>::setImage(InputArray _image)
 {
 	image = getTMat<TMat>(_image);
 }
-
+/*
+Ptr<OdometryFrameImpl> createOdometryFrame(InputArray image)
+{
+	//bool allEmpty = image.empty();
+	//bool useOcl = image.isUMat();
+	//Ptr<OdometryFrameImpl> res;
+	//if (useOcl && !allEmpty)
+	//	makePtr<OdometryFrameImplTMat<UMat>>(image);
+	//else
+	//	makePtr<OdometryFrameImplTMat<Mat>>(image);
+	//return makePtr<OdometryFrameImplTMat<Mat>>();
+}
+*/
 
 #endif // !ODOMETRY_FRAME_IMPL
