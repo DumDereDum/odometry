@@ -21,7 +21,7 @@ enum class OdometryType
 class Odometry
 {
 private:
-    OdometryImpl *odometry;
+    Ptr<OdometryImpl>odometry;
 public:
     Odometry(OdometryType otype);
     ~Odometry();
