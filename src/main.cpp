@@ -6,7 +6,7 @@
 
 #include "odometry.hpp"
 #include "odometry_func/odometry_frame.hpp"
-#include "odometry_func/odometry_frame_impl.hpp"
+//#include "odometry_func/odometry_frame_impl.hpp"
 
 using namespace cv;
 
@@ -40,9 +40,23 @@ int main()
     //Ptr<OdometryFrameImpl> of_umat = createOdometryFrame(UMat());
     //of_umat->setImage(UMat());
 
+    //OdometryFrame odf;
+    //odf.create(Mat());
+    //odf.create(UMat());
+
+    Odometry od_icp = Odometry(OdometryType::ICP);
     OdometryFrame odf;
     odf.create(Mat());
-    odf.create(UMat());
+    od_icp.compute(odf);
+    std::cout << std::endl;
+    
+    Odometry od_rgb = Odometry(OdometryType::RGB);
+    od_rgb.compute(odf);
+    std::cout << std::endl;
+    
+    Odometry od_rgbd = Odometry(OdometryType::RGBD);
+    od_rgbd.compute(odf);
+    std::cout << std::endl;
 
     return 0;
 }

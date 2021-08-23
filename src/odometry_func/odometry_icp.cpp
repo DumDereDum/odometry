@@ -8,7 +8,7 @@ OdometryICP::~OdometryICP()
 {
 }
 
-bool OdometryICP::compute() const
+bool OdometryICP::compute(OdometryFrame frame) const
 {
 	std::cout << "OdometryICP::compute()" << std::endl;
 	this->compute_corresps();

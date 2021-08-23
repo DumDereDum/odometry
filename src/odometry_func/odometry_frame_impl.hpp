@@ -1,5 +1,5 @@
-#ifndef ODOMETRY_FRAME_IMPL
-#define ODOMETRY_FRAME_IMPL
+#ifndef ODOMETRY_FRAME_IMPL_HPP
+#define ODOMETRY_FRAME_IMPL_HPP
 
 #include <iostream>
 #include <opencv2/core.hpp>
@@ -47,4 +47,4 @@ void OdometryFrameImplTMat<TMat>::setImage(InputArray _image)
 }
 
 
-#endif // !ODOMETRY_FRAME_IMPL
+#endif // !ODOMETRY_FRAME_IMPL_HPP

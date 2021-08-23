@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "odometry_frame.hpp"
+
 class OdometryImpl
 {
 private:
@@ -12,7 +14,7 @@ public:
     OdometryImpl();
     ~OdometryImpl();
 
-    virtual bool compute() const = 0;
+    virtual bool compute(OdometryFrame frame) const = 0;
 };
 
 #endif //ODOMETRY_IMPL_HPP

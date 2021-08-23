@@ -1,5 +1,5 @@
-#ifndef ODOMETRY_FRAME
-#define ODOMETRY_FRAME
+#ifndef ODOMETRY_FRAME_HPP
+#define ODOMETRY_FRAME_HPP
 
 #include <iostream>
 #include <opencv2/core.hpp>
@@ -15,20 +15,18 @@ class OdometryFrame
 public:
 	OdometryFrame() {};
 	~OdometryFrame() {};
-	void create(InputArray image);
+	void create(InputArray image)
+	{
+		bool allEmpty = image.empty();
+		bool useOcl = image.isUMat();
+		//if (useOcl && !allEmpty)
+		if (useOcl)
+			this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
+		else
+			this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
+	}
 private:
 	Ptr<OdometryFrameImpl> odometryFrame;
 };
 
-void OdometryFrame::create(InputArray image)
-{
-	bool allEmpty = image.empty();
-	bool useOcl = image.isUMat();
-	//if (useOcl && !allEmpty)
-	if (useOcl)
-		this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
-	else
-		this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
-}
-
-#endif // !ODOMETRY_FRAME
+#endif // !ODOMETRY_FRAME_HPP

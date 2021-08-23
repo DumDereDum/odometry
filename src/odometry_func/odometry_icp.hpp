@@ -12,7 +12,7 @@ public:
     OdometryICP();
     ~OdometryICP();
 
-    virtual bool compute() const override;
+    virtual bool compute(OdometryFrame frame) const override;
 };
 
 #endif //ODOMETRY_ICP_HPP

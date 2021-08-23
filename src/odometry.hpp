@@ -7,6 +7,7 @@
 #include "odometry_func/odometry_icp.hpp"
 #include "odometry_func/odometry_rgb.hpp"
 #include "odometry_func/odometry_rgbd.hpp"
+#include "odometry_func/odometry_frame.hpp"
 
 using namespace cv;
 
@@ -25,7 +26,8 @@ public:
     Odometry(OdometryType otype);
     ~Odometry();
 
-    bool compute();
+    bool compute(OdometryFrame frame);
 };
+
 
 #endif //ODOMETRY_HPP

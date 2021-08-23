@@ -8,7 +8,7 @@ OdometryRGBD::~OdometryRGBD()
 {
 }
 
-bool OdometryRGBD::compute() const
+bool OdometryRGBD::compute(OdometryFrame frame) const
 {
 	std::cout << "OdometryRGBD::compute()" << std::endl;
 	this->compute_corresps();
