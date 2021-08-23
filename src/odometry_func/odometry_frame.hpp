@@ -20,17 +20,15 @@ private:
 	Ptr<OdometryFrameImpl> odometryFrame;
 };
 
-void OdometryFrame::create(InputArray _image)
+void OdometryFrame::create(InputArray image)
 {
-	//bool allEmpty = _image.empty();
-	//bool useOcl = _image.isUMat();
+	bool allEmpty = image.empty();
+	bool useOcl = image.isUMat();
 	//if (useOcl && !allEmpty)
-	//if (1)
-	//	this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(_image);
-	//else
-	//	this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(_image);
+	if (useOcl)
+		this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
+	else
+		this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
 }
-
-
 
 #endif // !ODOMETRY_FRAME

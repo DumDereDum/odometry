@@ -10,16 +10,6 @@
 
 using namespace cv;
 
-Ptr<OdometryFrameImpl> createOdometryFrame(InputArray image)
-{
-    bool allEmpty = image.empty();
-    bool useOcl = image.isUMat();
-    //if (useOcl && !allEmpty)
-    if (useOcl)
-        return makePtr<OdometryFrameImplTMat<UMat>>(image);
-    else
-        return makePtr<OdometryFrameImplTMat<Mat>>(image);
-}
 
 int main()
 {
@@ -45,13 +35,14 @@ int main()
     //Ptr<OdometryFrameImpl> of_umat = makePtr<OdometryFrameImplTMat<UMat>>(UMat());;
     //of_umat->setImage(UMat());
 
-    
-    Ptr<OdometryFrameImpl> of_mat = createOdometryFrame(Mat());
-    of_mat->setImage(Mat());
-    Ptr<OdometryFrameImpl> of_umat = createOdometryFrame(UMat());
-    of_umat->setImage(UMat());
+    //Ptr<OdometryFrameImpl> of_mat = createOdometryFrame(Mat());
+    //of_mat->setImage(Mat());
+    //Ptr<OdometryFrameImpl> of_umat = createOdometryFrame(UMat());
+    //of_umat->setImage(UMat());
 
-
+    OdometryFrame odf;
+    odf.create(Mat());
+    odf.create(UMat());
 
     return 0;
 }
