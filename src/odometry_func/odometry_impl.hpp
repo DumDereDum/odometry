@@ -2,6 +2,7 @@
 #define ODOMETRY_IMPL_HPP
 
 #include <iostream>
+#include <opencv2/core/affine.hpp>
 
 #include "odometry_frame.hpp"
 
@@ -14,7 +15,7 @@ public:
     OdometryImpl();
     ~OdometryImpl();
 
-    virtual bool compute(OdometryFrame frame) const = 0;
+    virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt) const = 0;
 };
 
 #endif //ODOMETRY_IMPL_HPP
