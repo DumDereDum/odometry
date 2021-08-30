@@ -44,6 +44,12 @@ int main()
     //odf.create(Mat());
     //odf.create(UMat());
 
+    /*
+    Ptr<OdometryFrame> frame_prev = Ptr<OdometryFrame>(new OdometryFrame()),
+                       frame_curr = Ptr<OdometryFrame>(new OdometryFrame());
+    Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
+    */
+
     Odometry od_icp = Odometry(OdometryType::ICP);
     OdometryFrame odf;
     Affine3f Rt;
