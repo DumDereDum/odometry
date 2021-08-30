@@ -9,6 +9,7 @@
 #include "odometry_func/odometry_rgb.hpp"
 #include "odometry_func/odometry_rgbd.hpp"
 #include "odometry_func/odometry_frame.hpp"
+#include "odometry_func/odometry_settings.hpp"
 
 using namespace cv;
 
@@ -24,7 +25,7 @@ class Odometry
 private:
     Ptr<OdometryImpl>odometry;
 public:
-    Odometry(OdometryType otype);
+    Odometry(OdometryType otype, OdometrySettings settings);
     ~Odometry();
 
     bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt);

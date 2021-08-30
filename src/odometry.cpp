@@ -1,6 +1,6 @@
 #include "odometry.hpp"
 
-Odometry::Odometry(OdometryType otype)
+Odometry::Odometry(OdometryType otype, OdometrySettings settings)
 {
 	switch (otype)
 	{

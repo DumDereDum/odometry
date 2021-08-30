@@ -9,6 +9,10 @@ set(ODOMETRY
 	src/odometry.hpp
 	src/odometry.cpp
 	)
+set(ODOMETRY_SETTINGS
+	src/odometry_func/odometry_settings.hpp
+	src/odometry_func/odometry_settings.cpp
+	)
 set(ODOMETRY_FRAME
 	src/odometry_func/odometry_frame.hpp
 	src/odometry_func/odometry_frame_impl.hpp
@@ -27,4 +31,4 @@ set(ODOMETRY_IMPL
 	src/odometry_func/odometry_functions.cpp
 	)
 	
-add_executable(main ${MAIN} ${ODOMETRY} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL})
+add_executable(main ${MAIN} ${ODOMETRY} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL})

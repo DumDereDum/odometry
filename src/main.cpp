@@ -6,7 +6,7 @@
 
 #include "odometry.hpp"
 #include "odometry_func/odometry_frame.hpp"
-//#include "odometry_func/odometry_frame_impl.hpp"
+#include "odometry_func/odometry_settings.hpp"
 
 using namespace cv;
 
@@ -49,19 +49,21 @@ int main()
                        frame_curr = Ptr<OdometryFrame>(new OdometryFrame());
     Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
     */
+    
+    OdometrySettings ods;
 
-    Odometry od_icp = Odometry(OdometryType::ICP);
+    Odometry od_icp = Odometry(OdometryType::ICP, ods);
     OdometryFrame odf;
     Affine3f Rt;
     odf.create(Mat());
     od_icp.compute(odf, odf, Rt);
     std::cout << std::endl;
     
-    Odometry od_rgb = Odometry(OdometryType::RGB);
+    Odometry od_rgb = Odometry(OdometryType::RGB, ods);
     od_rgb.compute(odf, odf, Rt);
     std::cout << std::endl;
     
-    Odometry od_rgbd = Odometry(OdometryType::RGBD);
+    Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
     od_rgbd.compute(odf, odf, Rt);
     std::cout << std::endl;
 
