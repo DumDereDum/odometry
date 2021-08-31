@@ -28,7 +28,7 @@ public:
     Odometry(OdometryType otype, OdometrySettings settings);
     ~Odometry();
 
-    bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt);
+    bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt);
 };
 
 

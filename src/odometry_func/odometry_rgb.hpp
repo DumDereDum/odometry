@@ -12,7 +12,7 @@ public:
     OdometryRGB();
     ~OdometryRGB();
 
-    virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt) const override;
+    virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 };
 
 #endif //ODOMETRY_RGB_HPP

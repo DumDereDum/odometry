@@ -15,7 +15,7 @@ public:
     OdometryImpl();
     ~OdometryImpl();
 
-    virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt) const = 0;
+    virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const = 0;
 };
 
 #endif //ODOMETRY_IMPL_HPP

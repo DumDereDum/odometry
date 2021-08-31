@@ -8,7 +8,7 @@ OdometryRGB::~OdometryRGB()
 {
 }
 
-bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt) const
+bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryRGB::compute()" << std::endl;
 	this->compute_corresps();

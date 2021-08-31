@@ -8,7 +8,7 @@ OdometryRGBD::~OdometryRGBD()
 {
 }
 
-bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt) const
+bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryRGBD::compute()" << std::endl;
 	this->compute_corresps();

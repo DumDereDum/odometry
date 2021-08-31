@@ -25,7 +25,7 @@ Odometry::~Odometry()
 {
 }
 
-bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Affine3f& Rt)
+bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt)
 {
 	this->odometry->compute(srcFrame, dstFrame, Rt);
 	return true;

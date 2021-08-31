@@ -56,15 +56,15 @@ int main()
     Odometry od_icp = Odometry(OdometryType::ICP, ods);
     OdometryFrame odf;
     Affine3f Rt;
-    od_icp.compute(odf, odf, Rt);
+    od_icp.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
     
     Odometry od_rgb = Odometry(OdometryType::RGB, ods);
-    od_rgb.compute(odf, odf, Rt);
+    od_rgb.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
     
     Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
-    od_rgbd.compute(odf, odf, Rt);
+    od_rgbd.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
 
     return 0;
