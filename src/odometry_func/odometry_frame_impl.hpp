@@ -19,10 +19,10 @@ public:
 	virtual void getImage(OutputArray image) = 0;
 	virtual void setDepth(InputArray  depth) = 0;
 	virtual void getDepth(OutputArray depth) = 0;
-	//virtual void setMask(InputArray  mask) = 0;
-	//virtual void getMask(OutputArray mask) = 0;
-	//virtual void setNormals(InputArray  normals) = 0;
-	//virtual void getNormals(OutputArray normals) = 0;
+	virtual void setMask(InputArray  mask) = 0;
+	virtual void getMask(OutputArray mask) = 0;
+	virtual void setNormals(InputArray  normals) = 0;
+	virtual void getNormals(OutputArray normals) = 0;
 
 private:
 
@@ -39,6 +39,10 @@ public:
 	virtual void getImage(OutputArray image) override;
 	virtual void setDepth(InputArray  depth) override;
 	virtual void getDepth(OutputArray depth) override;
+	virtual void setMask(InputArray  mask) override;
+	virtual void getMask(OutputArray mask) override;
+	virtual void setNormals(InputArray  normals) override;
+	virtual void getNormals(OutputArray normals) override;
 
 private:
 	TMat image;
@@ -75,6 +79,30 @@ template<typename TMat>
 void OdometryFrameImplTMat<TMat>::getDepth(OutputArray _depth)
 {
 	_depth.assign(this->depth);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setMask(InputArray _mask)
+{
+	this->mask = getTMat<TMat>(_mask);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::getMask(OutputArray _mask)
+{
+	_mask.assign(this->mask);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setNormals(InputArray _normals)
+{
+	this->normals = getTMat<TMat>(_normals);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::getNormals(OutputArray _normals)
+{
+	_normals.assign(this->normals);
 }
 
 

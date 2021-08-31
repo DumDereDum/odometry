@@ -40,7 +40,10 @@ public:
 	void getImage(OutputArray image) { this->odometryFrame->getImage(image); }
 	void setDepth(InputArray  depth) { this->odometryFrame->setDepth(depth); }
 	void getDepth(OutputArray depth) { this->odometryFrame->getDepth(depth); }
-
+	void setMask(InputArray  mask) { this->odometryFrame->setMask(mask); }
+	void getMask(OutputArray mask) { this->odometryFrame->getMask(mask); }
+	void setNormals(InputArray  normals) { this->odometryFrame->setNormals(normals); }
+	void getNormals(OutputArray normals) { this->odometryFrame->getNormals(normals); }
 };
 
 #endif // !ODOMETRY_FRAME_HPP
