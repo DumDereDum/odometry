@@ -12,14 +12,14 @@
 #include "odometry_func/odometry_settings.hpp"
 
 using namespace cv;
-
+/*
 enum class OdometryType
 {
     ICP  = 0,
     RGB  = 1,
     RGBD = 2 
 };
-
+*/
 class Odometry
 {
 private:

@@ -51,11 +51,11 @@ int main()
     */
     
     OdometrySettings ods;
+    ods.setCameraMatrix(Mat());
 
     Odometry od_icp = Odometry(OdometryType::ICP, ods);
     OdometryFrame odf;
     Affine3f Rt;
-    odf.create(Mat());
     od_icp.compute(odf, odf, Rt);
     std::cout << std::endl;
     
