@@ -20,6 +20,8 @@ enum class OdometryType
 
 class OdometryFrame
 {
+private:
+	Ptr<OdometryFrameImpl> odometryFrame;
 public:
 	OdometryFrame(InputArray image = noArray(),
 				  OdometryType otype = OdometryType::ICP)
@@ -34,8 +36,11 @@ public:
 			this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
 	};
 	~OdometryFrame() {};
-private:
-	Ptr<OdometryFrameImpl> odometryFrame;
+	void setImage(InputArray  image) { this->odometryFrame->setImage(image); }
+	void getImage(OutputArray image) { this->odometryFrame->getImage(image); }
+	void setDepth(InputArray  depth) { this->odometryFrame->setDepth(depth); }
+	void getDepth(OutputArray depth) { this->odometryFrame->getDepth(depth); }
+
 };
 
 #endif // !ODOMETRY_FRAME_HPP
