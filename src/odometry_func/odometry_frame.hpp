@@ -23,14 +23,15 @@ class OdometryFrame
 private:
 	Ptr<OdometryFrameImpl> odometryFrame;
 public:
-	OdometryFrame(InputArray image = noArray(),
+	OdometryFrame(InputArray image,
 				  OdometryType otype = OdometryType::ICP)
 	{
 		bool allEmpty = image.empty();
 		bool useOcl   = image.isUMat();
 		bool isNoArray  = (&image == &noArray());
 		//if (useOcl && !allEmpty && !isNoArray)
-		if (useOcl && !isNoArray)
+		std::cout << " allEmpty:" << allEmpty<<" useOcl:" << useOcl << " isNoArray:" << isNoArray << std::endl;
+		if (useOcl)
 			this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
 		else
 			this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
@@ -44,6 +45,8 @@ public:
 	void getMask(OutputArray mask) { this->odometryFrame->getMask(mask); }
 	void setNormals(InputArray  normals) { this->odometryFrame->setNormals(normals); }
 	void getNormals(OutputArray normals) { this->odometryFrame->getNormals(normals); }
+	
+	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 };
 
 #endif // !ODOMETRY_FRAME_HPP

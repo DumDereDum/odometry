@@ -24,6 +24,8 @@ public:
 	virtual void setNormals(InputArray  normals) = 0;
 	virtual void getNormals(OutputArray normals) = 0;
 
+	virtual void findMask(InputArray image) = 0;
+
 private:
 
 };
@@ -43,6 +45,8 @@ public:
 	virtual void getMask(OutputArray mask) override;
 	virtual void setNormals(InputArray  normals) override;
 	virtual void getNormals(OutputArray normals) override;
+
+	virtual void findMask(InputArray image) override;
 
 private:
 	TMat image;
@@ -105,5 +109,16 @@ void OdometryFrameImplTMat<TMat>::getNormals(OutputArray _normals)
 	_normals.assign(this->normals);
 }
 
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
+{
+	Mat depth = _depth.getMat();
+	Mat mask(depth.size(), CV_8UC1, Scalar(255));
+	for (int y = 0; y < depth.rows; y++)
+		for (int x = 0; x < depth.cols; x++)
+			if (cvIsNaN(depth.at<float>(y, x)) || depth.at<float>(y, x) > 10 || depth.at<float>(y, x) <= FLT_EPSILON)
+				mask.at<uchar>(y, x) = 0;
+	this->setMask(mask);
+}
 
 #endif // !ODOMETRY_FRAME_IMPL_HPP
