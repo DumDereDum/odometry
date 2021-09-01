@@ -10,6 +10,12 @@
 
 using namespace cv;
 
+enum OdometryFramePyramidType
+{
+	PYR_IMAGE = 0, PYR_DEPTH = 1, PYR_MASK = 2, PYR_CLOUD = 3, PYR_DIX = 4, PYR_DIY = 5, PYR_TEXMASK = 6, PYR_NORM = 7, PYR_NORMMASK = 8,
+	N_PYRAMIDS
+};
+
 class OdometryFrameImpl
 {
 public:
@@ -23,9 +29,16 @@ public:
 	virtual void getMask(OutputArray mask) = 0;
 	virtual void setNormals(InputArray  normals) = 0;
 	virtual void getNormals(OutputArray normals) = 0;
+	virtual void setPyramidAt(InputArray  img,
+		OdometryFramePyramidType pyrType, size_t level) = 0;
+	virtual void getPyramidAt(OutputArray img,
+		OdometryFramePyramidType pyrType, size_t level) = 0;
+
 
 	virtual void findMask(InputArray image) = 0;
 
+	virtual void prepareAsSrcFrame() = 0;
+	virtual void prepareAsDstFrame() = 0;
 private:
 
 };
@@ -45,14 +58,23 @@ public:
 	virtual void getMask(OutputArray mask) override;
 	virtual void setNormals(InputArray  normals) override;
 	virtual void getNormals(OutputArray normals) override;
+	virtual void setPyramidAt(InputArray  img,
+		OdometryFramePyramidType pyrType, size_t level) override;
+	virtual void getPyramidAt(OutputArray img,
+		OdometryFramePyramidType pyrType, size_t level) override;
+
 
 	virtual void findMask(InputArray image) override;
+
+	virtual void prepareAsSrcFrame() override;
+	virtual void prepareAsDstFrame() override;
 
 private:
 	TMat image;
 	TMat depth;
 	TMat mask;
 	TMat normals;
+	std::vector< std::vector<TMat> > pyramids;
 };
 
 template<typename TMat>
@@ -119,6 +141,26 @@ void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
 			if (cvIsNaN(depth.at<float>(y, x)) || depth.at<float>(y, x) > 10 || depth.at<float>(y, x) <= FLT_EPSILON)
 				mask.at<uchar>(y, x) = 0;
 	this->setMask(mask);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level)
+{
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level)
+{
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::prepareAsSrcFrame()
+{
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::prepareAsDstFrame()
+{
 }
 
 #endif // !ODOMETRY_FRAME_IMPL_HPP
