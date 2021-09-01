@@ -25,7 +25,8 @@ int main(int argc, char** argv)
     Matx33f intr = Matx33f(fx, 0, cx,
         0, fy, cy,
         0, 0, 1);
-    float depthFactor = 5000;
+    //float depthFactor = 5000;
+    float depthFactor = 0.1;
     Ptr<Scene> scene = Scene::create(true, frameSize, intr, depthFactor);
 
     std::vector<Affine3f> poses = scene->getPoses();
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
     imshow("odf_depth", odf_depth);
     imshow("odf_rgb", odf_rgb);
     imshow("odf_mask", odf_mask);
-    std::cout << odf_mask << std::endl;
+
     waitKey(60000);
 
     /*
