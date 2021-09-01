@@ -1,18 +1,41 @@
 #include <iostream>
+#include <fstream>
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/core/cvstd.hpp>
+#include <opencv2/core/utility.hpp>
 
 #include "odometry.hpp"
 #include "odometry_func/odometry_frame.hpp"
 #include "odometry_func/odometry_settings.hpp"
+#include "tmp.hpp"
 
 using namespace cv;
 
-
-int main()
+int main(int argc, char** argv)
 {
+    Size frameSize = Size(640, 480);
+    float fx, fy, cx, cy;
+    fx = fy = 525.f;
+    cx = frameSize.width / 2 - 0.5f;
+    cy = frameSize.height / 2 - 0.5f;
+    Matx33f intr = Matx33f(fx, 0, cx,
+        0, fy, cy,
+        0, 0, 1);
+    float depthFactor = 5000;
+    Ptr<Scene> scene = Scene::create(false, frameSize, intr, depthFactor);
+
+    std::vector<Affine3f> poses = scene->getPoses();
+    Mat depth = scene->depth(poses[1]);
+    Mat rgb = scene->rgb(poses[1]);
+
+    imshow("depth", depth);
+    imshow("rgb", rgb);
+    waitKey(10000);
+
     /*
     Ptr<OdometryFrame> frame_prev = Ptr<OdometryFrame>(new OdometryFrame()),
                        frame_curr = Ptr<OdometryFrame>(new OdometryFrame());

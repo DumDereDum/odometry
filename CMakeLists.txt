@@ -4,6 +4,7 @@ project(odometry)
 
 set(MAIN
 	src/main.cpp
+	src/tmp.hpp
 	)
 set(ODOMETRY
 	src/odometry.hpp
