@@ -36,9 +36,9 @@ int main(int argc, char** argv)
     //UMat depth = scene->depth(poses[1]).getUMat(af);
     //UMat rgb = scene->rgb(poses[1]).getUMat(af);
 
-    imshow("depth", depth);
-    imshow("rgb", rgb);
-    waitKey(1000);
+    //imshow("depth", depth);
+    //imshow("rgb", rgb);
+    //waitKey(1000);
 
     OdometryFrame odf = OdometryFrame(Mat());
     //OdometryFrame odf = OdometryFrame(UMat());
@@ -52,9 +52,11 @@ int main(int argc, char** argv)
     odf.getDepth(odf_depth);
     odf.getMask(odf_mask);
 
-    imshow("odf_depth", odf_depth);
-    imshow("odf_rgb", odf_rgb);
-    imshow("odf_mask", odf_mask);
+    //imshow("odf_depth", odf_depth);
+    //imshow("odf_rgb", odf_rgb);
+    //imshow("odf_mask", odf_mask);
+
+    odf.prepareRGBFrame();
 
     waitKey(60000);
 

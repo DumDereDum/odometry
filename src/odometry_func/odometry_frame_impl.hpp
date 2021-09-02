@@ -96,7 +96,7 @@ private:
 	const float maxDepth = 4.f;
 	const float maxDepthDiff = 0.07f;
 	const float maxPointsPart = 0.07f;
-
+	const InputArray minGradientMagnitudes = noArray();
 };
 
 template<typename TMat>
@@ -220,7 +220,7 @@ void OdometryFrameImplTMat<TMat>::prepareRGBDFrame()
 template<typename TMat>
 Size OdometryFrameImplTMat<TMat>::prepareFrameCacheRGB()
 {
-	/*
+	///*
 	// Can be transformed into template argument in the future
 	// when this algorithm supports OCL UMats too
 	typedef Mat TMat;
@@ -241,7 +241,11 @@ Size OdometryFrameImplTMat<TMat>::prepareFrameCacheRGB()
 		else
 			CV_Error(Error::StsBadSize, "Image or pyramidImage have to be set.");
 	}
+	//CV_ERROR doesn't work on my ps :(
+	// Why image must to be CV_8UC1 ?!
 	checkImage(image);
+	image.convertTo(image, CV_8UC1);
+
 
 	TMat depth;
 	this->getDepth(depth);
@@ -283,20 +287,20 @@ Size OdometryFrameImplTMat<TMat>::prepareFrameCacheRGB()
 	preparePyramidMask<TMat>(mask, this->pyramids[OdometryFramePyramidType::PYR_DEPTH], (float)minDepth, (float)maxDepth,
 		this->pyramids[OdometryFramePyramidType::PYR_NORM], this->pyramids[OdometryFramePyramidType::PYR_MASK]);
 
-	if (cacheType & OdometryFramePyramidType::CACHE_SRC)
-		preparePyramidCloud<TMat>(this->pyramids[OdometryFramePyramidType::PYR_DEPTH], cameraMatrix, this->pyramids[OdometryFramePyramidType::PYR_CLOUD]);
+	//if (cacheType & OdometryFramePyramidType::CACHE_SRC)
+	//	preparePyramidCloud<TMat>(this->pyramids[OdometryFramePyramidType::PYR_DEPTH], cameraMatrix, this->pyramids[OdometryFramePyramidType::PYR_CLOUD]);
 
-	if (cacheType & OdometryFramePyramidType::CACHE_DST)
-	{
+	//if (cacheType & OdometryFramePyramidType::CACHE_DST)
+	//{
 		preparePyramidSobel<TMat>(this->pyramids[OdometryFramePyramidType::PYR_IMAGE], 1, 0, this->pyramids[OdometryFramePyramidType::PYR_DIX]);
 		preparePyramidSobel<TMat>(this->pyramids[OdometryFramePyramidType::PYR_IMAGE], 0, 1, this->pyramids[OdometryFramePyramidType::PYR_DIY]);
 		preparePyramidTexturedMask(this->pyramids[OdometryFramePyramidType::PYR_DIX], this->pyramids[OdometryFramePyramidType::PYR_DIY], minGradientMagnitudes,
 			this->pyramids[OdometryFramePyramidType::PYR_MASK], maxPointsPart, this->pyramids[OdometryFramePyramidType::PYR_TEXMASK]);
-	}
+	//}
 
 	return image.size();
-	*/
-	return Mat().size();
+	//*/
+	//return Mat().size();
 }
 
 template<typename TMat>

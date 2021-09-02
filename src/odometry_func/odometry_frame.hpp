@@ -71,9 +71,10 @@ public:
 
 	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 
-	void prepareICPFrame()  {};
-	void prepareRGBFrame()  {};
-	void prepareRGBDFrame() {};
+	void prepareICPFrame()  { this->odometryFrame->prepareICPFrame(); };
+	void prepareRGBFrame() { 
+		this->odometryFrame->prepareRGBFrame(); };
+	void prepareRGBDFrame() { this->odometryFrame->prepareRGBDFrame(); };
 };
 
 #endif // !ODOMETRY_FRAME_HPP

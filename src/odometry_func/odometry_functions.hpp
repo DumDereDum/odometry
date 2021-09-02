@@ -25,6 +25,15 @@ UMat getTMat<UMat>(InputArray a, int i)
 	return a.getUMat(i);
 }
 
+template<typename TMat>
+static TMat& getTMatRef(InputOutputArray, int = -1);
+
+template<>
+Mat& getTMatRef<Mat>(InputOutputArray a, int i)
+{
+    return a.getMatRef(i);
+}
+
 static const int sobelSize = 3;
 static const double sobelScale = 1. / 8.;
 static const int normalWinSize = 5;
@@ -170,9 +179,11 @@ static inline
 void checkImage(InputArray image)
 {
     if (image.empty())
-        CV_Error(Error::StsBadSize, "Image is empty.");
+        //CV_Error(Error::StsBadSize, "Image is empty.");
+        std::cout << "Image is empty." << std::endl;
     if (image.type() != CV_8UC1)
-        CV_Error(Error::StsBadSize, "Image type has to be CV_8UC1.");
+        //CV_Error(Error::StsBadSize, "Image type has to be CV_8UC1.");
+        std::cout << "Image type has to be CV_8UC1. " << image.type() << std::endl;
 }
 
 static inline
