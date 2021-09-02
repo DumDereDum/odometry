@@ -43,8 +43,7 @@ class OdometryFrame
 private:
 	Ptr<OdometryFrameImpl> odometryFrame;
 public:
-	OdometryFrame(InputArray image,
-				  OdometryType otype = OdometryType::ICP)
+	OdometryFrame(InputArray image)
 	{
 		bool allEmpty = image.empty();
 		bool useOcl   = image.isUMat();
@@ -72,8 +71,9 @@ public:
 
 	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 
-	void prepareAsSrcFrame() {};
-	void prepareAsDstFrame() {};
+	void prepareICPFrame()  {};
+	void prepareRGBFrame()  {};
+	void prepareRGBDFrame() {};
 };
 
 #endif // !ODOMETRY_FRAME_HPP
