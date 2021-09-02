@@ -29,6 +29,8 @@ public:
 	virtual void getMask(OutputArray mask) = 0;
 	virtual void setNormals(InputArray  normals) = 0;
 	virtual void getNormals(OutputArray normals) = 0;
+	virtual void   setPyramidLevels(size_t _nLevels) = 0;
+	virtual size_t getPyramidLevels(OdometryFramePyramidType oftype) = 0;
 	virtual void setPyramidAt(InputArray  img,
 		OdometryFramePyramidType pyrType, size_t level) = 0;
 	virtual void getPyramidAt(OutputArray img,
@@ -58,6 +60,8 @@ public:
 	virtual void getMask(OutputArray mask) override;
 	virtual void setNormals(InputArray  normals) override;
 	virtual void getNormals(OutputArray normals) override;
+	virtual void   setPyramidLevels(size_t _nLevels) override;
+	virtual size_t getPyramidLevels(OdometryFramePyramidType oftype) override;
 	virtual void setPyramidAt(InputArray  img,
 		OdometryFramePyramidType pyrType, size_t level) override;
 	virtual void getPyramidAt(OutputArray img,
@@ -132,6 +136,24 @@ void OdometryFrameImplTMat<TMat>::getNormals(OutputArray _normals)
 }
 
 template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setPyramidLevels(size_t _nLevels)
+{
+	for (auto& p : pyramids)
+	{
+		p.resize(_nLevels, TMat());
+	}
+}
+
+template<typename TMat>
+size_t OdometryFrameImplTMat<TMat>::getPyramidLevels(OdometryFramePyramidType oftype)
+{
+	if (oftype < N_PYRAMIDS)
+		return pyramids[oftype].size();
+	else
+		return 0;
+}
+
+template<typename TMat>
 void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
 {
 	Mat depth = _depth.getMat();
@@ -144,13 +166,17 @@ void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
 }
 
 template<typename TMat>
-void OdometryFrameImplTMat<TMat>::setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level)
+void OdometryFrameImplTMat<TMat>::setPyramidAt(InputArray  _img, OdometryFramePyramidType pyrType, size_t level)
 {
+	TMat img = getTMat<TMat>(_img);
+	pyramids[pyrType][level] = img;
 }
 
 template<typename TMat>
-void OdometryFrameImplTMat<TMat>::getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level)
+void OdometryFrameImplTMat<TMat>::getPyramidAt(OutputArray _img, OdometryFramePyramidType pyrType, size_t level)
 {
+	TMat img = pyramids[pyrType][level];
+	_img.assign(img);
 }
 
 template<typename TMat>
