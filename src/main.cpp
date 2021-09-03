@@ -66,12 +66,12 @@ int main(int argc, char** argv)
     Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
     */
 
-    /*
+    ///*
     OdometrySettings ods;
     ods.setCameraMatrix(Mat());
 
     Odometry od_icp = Odometry(OdometryType::ICP, ods);
-    OdometryFrame odf;
+    //OdometryFrame odf();
     Affine3f Rt;
     od_icp.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
     Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
     od_rgbd.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
-    */
+    //*/
 
     return 0;
 }

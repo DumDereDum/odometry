@@ -309,7 +309,7 @@ Size OdometryFrameImplTMat<TMat>::prepareFrameCacheRGB()
 template<typename TMat>
 Size OdometryFrameImplTMat<TMat>::prepareFrameCacheICP()
 {
-	/*
+	
 	TMat depth;
 	this->getDepth(depth);
 	if (depth.empty())
@@ -354,12 +354,11 @@ Size OdometryFrameImplTMat<TMat>::prepareFrameCacheICP()
 	this->getDepth(depth);
 	checkDepth(depth, depth.size());
 
-	makeFrameFromDepth(depth, this->pyramids[OdometryFramePyramidType::PYR_CLOUD], this->pyramids[OdometryFramePyramidType::PYR_NORM], cameraMatrix, (int)iterCounts.size(),
-		depthFactor, sigmaDepth, sigmaSpatial, kernelSize, truncateThreshold);
+	//makeFrameFromDepth(depth, this->pyramids[OdometryFramePyramidType::PYR_CLOUD], this->pyramids[OdometryFramePyramidType::PYR_NORM], cameraMatrix, (int)iterCounts.size(),
+	//	depthFactor, sigmaDepth, sigmaSpatial, kernelSize, truncateThreshold);
 
 	return depth.size();
-	*/
-	return Mat().size();
+	
 }
 
 #endif // !ODOMETRY_FRAME_IMPL_HPP
