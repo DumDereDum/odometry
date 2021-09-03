@@ -26,7 +26,7 @@ int main(int argc, char** argv)
         0, fy, cy,
         0, 0, 1);
     //float depthFactor = 5000;
-    float depthFactor = 0.1;
+    double depthFactor = 0.1;
     Ptr<Scene> scene = Scene::create(true, frameSize, intr, depthFactor);
 
     std::vector<Affine3f> poses = scene->getPoses();
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 
     odf.prepareRGBFrame();
 
-    waitKey(60000);
+    //waitKey(60000);
 
     /*
     Ptr<OdometryFrame> frame_prev = Ptr<OdometryFrame>(new OdometryFrame()),
