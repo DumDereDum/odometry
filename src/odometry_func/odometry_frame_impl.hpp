@@ -96,11 +96,14 @@ private:
 	const float maxDepth = 4.f;
 	const float maxDepthDiff = 0.07f;
 	const float maxPointsPart = 0.07f;
-	const InputArray minGradientMagnitudes = noArray();
+	//const InputArray minGradientMagnitudes = noArray();
+	std::vector<float> minGradientMagnitudes = std::vector<float>(iterCounts.size(), minGradientMagnitude);
+
 };
 
 template<typename TMat>
 OdometryFrameImplTMat<TMat>::OdometryFrameImplTMat(InputArray _image)
+	: pyramids(N_PYRAMIDS)
 {
 	image = getTMat<TMat>(_image);
 };

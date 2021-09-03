@@ -300,7 +300,9 @@ void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfAr
     }
     else
     {
-        CV_Assert(minGradMagnitudes.type() == CV_32F);
+        //CV_Assert(minGradMagnitudes.type() == CV_32F);
+        if (minGradMagnitudes.type() != CV_32F)
+            std::cout << "minGradMagnitudes.type() != CV_32F  " << minGradMagnitudes.type() << std::endl;
         Mat_<float> mgMags = minGradMagnitudes.getMat();
 
         const float sobelScale2_inv = 1.f / (float)(sobelScale * sobelScale);
