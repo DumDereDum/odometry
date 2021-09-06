@@ -4,6 +4,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/cvstd.hpp>
 
 using namespace cv;
 
@@ -21,7 +22,7 @@ private:
 class OdometrySettings
 {
 public:
-	OdometrySettings() {};
+	OdometrySettings();
 	~OdometrySettings() {};
 	void setCameraMatrix(InputArray val) { this->odometrySettings->setCameraMatrix(val); }
 	void getCameraMatrix(OutputArray val) const { this->odometrySettings->getCameraMatrix(val); }

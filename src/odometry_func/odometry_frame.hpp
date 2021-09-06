@@ -6,7 +6,6 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/mat.hpp>
 
-//#include "../odometry.hpp"
 #include "odometry_frame_impl.hpp"
 
 using namespace cv;
@@ -30,31 +29,49 @@ enum class OdometryType
 * @param PYR_NORMMASK The pyramid of normals masks
 */
 
-/*
 enum OdometryFramePyramidType
 {
 	PYR_IMAGE = 0, PYR_DEPTH = 1, PYR_MASK = 2, PYR_CLOUD = 3, PYR_DIX = 4, PYR_DIY = 5, PYR_TEXMASK = 6, PYR_NORM = 7, PYR_NORMMASK = 8,
 	N_PYRAMIDS
 };
-*/
+
+class OdometryFrameImpl
+{
+public:
+	OdometryFrameImpl() {};
+	~OdometryFrameImpl() {};
+	virtual void setImage(InputArray  image) = 0;
+	virtual void getImage(OutputArray image) = 0;
+	virtual void setDepth(InputArray  depth) = 0;
+	virtual void getDepth(OutputArray depth) = 0;
+	virtual void setMask(InputArray  mask) = 0;
+	virtual void getMask(OutputArray mask) = 0;
+	virtual void setNormals(InputArray  normals) = 0;
+	virtual void getNormals(OutputArray normals) = 0;
+	virtual void   setPyramidLevels(size_t _nLevels) = 0;
+	virtual size_t getPyramidLevels(OdometryFramePyramidType oftype) = 0;
+	virtual void setPyramidAt(InputArray  img,
+		OdometryFramePyramidType pyrType, size_t level) = 0;
+	virtual void getPyramidAt(OutputArray img,
+		OdometryFramePyramidType pyrType, size_t level) = 0;
+
+
+	virtual void findMask(InputArray image) = 0;
+
+	virtual void prepareICPFrame() = 0;
+	virtual void prepareRGBFrame() = 0;
+	virtual void prepareRGBDFrame() = 0;
+
+private:
+
+};
 
 class OdometryFrame
 {
 private:
 	Ptr<OdometryFrameImpl> odometryFrame;
 public:
-	OdometryFrame(InputArray image)
-	{
-		bool allEmpty = image.empty();
-		bool useOcl   = image.isUMat();
-		bool isNoArray  = (&image == &noArray());
-		//if (useOcl && !allEmpty && !isNoArray)
-		std::cout << " allEmpty:" << allEmpty<<" useOcl:" << useOcl << " isNoArray:" << isNoArray << std::endl;
-		if (useOcl)
-			this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
-		else
-			this->odometryFrame = makePtr<OdometryFrameImplTMat<Mat>>(image);
-	};
+	OdometryFrame(InputArray image);
 	~OdometryFrame() {};
 	void setImage(InputArray  image) { this->odometryFrame->setImage(image); }
 	void getImage(OutputArray image) { this->odometryFrame->getImage(image); }
@@ -67,13 +84,10 @@ public:
 	void setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level) {};
 	void getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level) {};
 
-
-
 	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 
 	void prepareICPFrame()  { this->odometryFrame->prepareICPFrame(); };
-	void prepareRGBFrame() { 
-		this->odometryFrame->prepareRGBFrame(); };
+	void prepareRGBFrame()  { this->odometryFrame->prepareRGBFrame(); };
 	void prepareRGBDFrame() { this->odometryFrame->prepareRGBDFrame(); };
 };
 

@@ -55,10 +55,10 @@ int main(int argc, char** argv)
     //imshow("odf_depth", odf_depth);
     //imshow("odf_rgb", odf_rgb);
     //imshow("odf_mask", odf_mask);
-
+    //waitKey(60000);
+    
     odf.prepareRGBFrame();
 
-    //waitKey(60000);
 
     /*
     Ptr<OdometryFrame> frame_prev = Ptr<OdometryFrame>(new OdometryFrame()),

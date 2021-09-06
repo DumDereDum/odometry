@@ -11,6 +11,11 @@ private:
     Matx33f cameraMatrix;
 };
 
+OdometrySettings::OdometrySettings()
+{
+    this->odometrySettings = makePtr<OdometrySettingsImplCommon>();
+}
+
 const cv::Matx33f defaultCameraMatrix =
 { /* fx, 0, cx*/ 0, 0, 0,
   /* 0, fy, cy*/ 0, 0, 0,
