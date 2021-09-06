@@ -13,6 +13,8 @@ set(ODOMETRY
 set(ODOMETRY_SETTINGS
 	src/odometry_func/odometry_settings.hpp
 	src/odometry_func/odometry_settings.cpp
+	src/odometry_func/odometry_settings_impl.hpp
+	src/odometry_func/odometry_settings_impl.cpp
 	)
 set(ODOMETRY_FRAME
 	src/odometry_func/odometry_frame.hpp

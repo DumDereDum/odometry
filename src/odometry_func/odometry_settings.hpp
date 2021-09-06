@@ -7,22 +7,26 @@
 
 using namespace cv;
 
-#include "odometry_settings_impl.hpp"
-
-const cv::Matx33f defaultCameraMatrix = { /* fx, 0, cx*/ 0, 0, 0,
-										  /* 0, fy, cy*/ 0, 0, 0,
-										  /* 0,  0,  0*/ 0, 0, 0 };
+class OdometrySettingsImpl
+{
+public:
+	OdometrySettingsImpl() {};
+	~OdometrySettingsImpl() {};
+	virtual void setCameraMatrix(InputArray val) = 0;
+	virtual void getCameraMatrix(OutputArray val) const = 0;
+private:
+	Matx33f cameraMatrix;
+};
 
 class OdometrySettings
 {
 public:
 	OdometrySettings() {};
 	~OdometrySettings() {};
-	void setCameraMatrix(InputArray val);
-	void getCameraMatrix(OutputArray val) const;
+	void setCameraMatrix(InputArray val) { this->odometrySettings->setCameraMatrix(val); }
+	void getCameraMatrix(OutputArray val) const { this->odometrySettings->getCameraMatrix(val); }
 private:
 	Ptr<OdometrySettingsImpl> odometrySettings;
-	Matx33f cameraMatrix;
 };
 
 
