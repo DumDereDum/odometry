@@ -4,8 +4,8 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/affine.hpp>
 
-#include "odometry_func/odometry_frame.hpp"
-#include "odometry_func/odometry_settings.hpp"
+#include "../src/odometry_frame.hpp"
+#include "../src/odometry_settings.hpp"
 
 using namespace cv;
 

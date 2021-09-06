@@ -1,7 +1,7 @@
 #ifndef ODOMETRY_RGBD_HPP
 #define ODOMETRY_RGBD_HPP
 
-#include "../odometry.hpp"
+#include "../include/odometry.hpp"
 
 class OdometryRGBD : public OdometryImpl
 {

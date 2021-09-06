@@ -3,29 +3,29 @@ cmake_minimum_required(VERSION 2.8)
 project(odometry)
 
 set(MAIN
-	src/main.cpp
-	src/tmp.hpp
+	odometry/main.cpp
 	)
-set(ODOMETRY
-	src/odometry.hpp
-	src/odometry.cpp
-	)
+set(INCLUDE
+	odometry/include/tmp.hpp
+	odometry/include/odometry.hpp
+)
 set(ODOMETRY_SETTINGS
-	src/odometry_func/odometry_settings.hpp
-	src/odometry_func/odometry_settings_impl.cpp
+	odometry/src/odometry_settings.hpp
+	odometry/src/odometry_settings_impl.cpp
 	)
 set(ODOMETRY_FRAME
-	src/odometry_func/odometry_frame.hpp
-	src/odometry_func/odometry_frame_impl.cpp
-	src/odometry_func/odometry_functions.hpp	
+	odometry/src/odometry_frame.hpp
+	odometry/src/odometry_frame_impl.cpp
+	odometry/src/odometry_functions.hpp	
 	)
 set(ODOMETRY_IMPL
-	src/odometry_func/odometry_icp.hpp
-	src/odometry_func/odometry_icp.cpp
-	src/odometry_func/odometry_rgb.hpp
-	src/odometry_func/odometry_rgb.cpp
-	src/odometry_func/odometry_rgbd.hpp
-	src/odometry_func/odometry_rgbd.cpp
+	odometry/src/odometry.cpp
+	odometry/src/odometry_icp.hpp
+	odometry/src/odometry_icp.cpp
+	odometry/src/odometry_rgb.hpp
+	odometry/src/odometry_rgb.cpp
+	odometry/src/odometry_rgbd.hpp
+	odometry/src/odometry_rgbd.cpp
 	)
 	
-add_executable(main ${MAIN} ${ODOMETRY} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL})
+add_executable(main ${MAIN} ${INCLUDE} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL})

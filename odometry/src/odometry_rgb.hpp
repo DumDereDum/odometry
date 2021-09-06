@@ -1,18 +1,18 @@
-#ifndef ODOMETRY_ICP_HPP
-#define ODOMETRY_ICP_HPP
+#ifndef ODOMETRY_RGB_HPP
+#define ODOMETRY_RGB_HPP
 
-#include "../odometry.hpp"
+#include "../include/odometry.hpp"
 
-class OdometryICP : public OdometryImpl
+class OdometryRGB : public OdometryImpl
 {
 private:
 	virtual bool compute_corresps() const override;
 	virtual bool compute_Rt() const override;
 public:
-	OdometryICP();
-	~OdometryICP();
+	OdometryRGB();
+	~OdometryRGB();
 
 	virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 };
 
-#endif //ODOMETRY_ICP_HPP
+#endif //ODOMETRY_RGB_HPP
