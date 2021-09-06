@@ -5,9 +5,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/core/utility.hpp>
+#include <opencv2/core/ocl.hpp>
+#include <opencv2/core/affine.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/core/cvstd.hpp>
-#include <opencv2/core/utility.hpp>
-#include <opencv2/core/utility.hpp>
+
+using namespace cv;
 
 struct Reprojector
 {

@@ -1,4 +1,7 @@
-#include "odometry.hpp"
+#include "odometry_func/odometry_icp.hpp"
+#include "odometry_func/odometry_rgb.hpp"
+#include "odometry_func/odometry_rgbd.hpp"
+
 
 Odometry::Odometry(OdometryType otype, OdometrySettings settings)
 {

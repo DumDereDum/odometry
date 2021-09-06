@@ -6,16 +6,7 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "odometry_frame_impl.hpp"
-
 using namespace cv;
-
-enum class OdometryType
-{
-	ICP = 0,
-	RGB = 1,
-	RGBD = 2
-};
 
 /** Indicates what pyramid is to access using get/setPyramid... methods:
 * @param PYR_IMAGE The pyramid of RGB images
