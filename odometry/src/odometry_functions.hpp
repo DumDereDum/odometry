@@ -7,9 +7,11 @@ static inline
 void checkImage(InputArray image)
 {
     if (image.empty())
-        CV_Error(Error::StsBadSize, "Image is empty.");
+        //CV_Error(Error::StsBadSize, "Image is empty.");
+        std::cout << "Image is empty." << std::endl;
     if (image.type() != CV_8UC1)
-        CV_Error(Error::StsBadSize, "Image type has to be CV_8UC1.");
+        //CV_Error(Error::StsBadSize, "Image type has to be CV_8UC1.");
+        std::cout << "Image type has to be CV_8UC1." << image.type() << std::endl;
 }
 
 //Size prepareFramesCache(OdometryFrame srcFrame, OdometryFrame dstFrame);

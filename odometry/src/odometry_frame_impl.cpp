@@ -2,6 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc/types_c.h>
 
 #include "utils.hpp"
 #include "odometry_frame.hpp"
@@ -17,6 +18,7 @@ public:
 
 	virtual void setImage(InputArray  image) override;
 	virtual void getImage(OutputArray image) override;
+	virtual void getGrayImage(OutputArray image) override;
 	virtual void setDepth(InputArray  depth) override;
 	virtual void getDepth(OutputArray depth) override;
 	virtual void setMask(InputArray  mask) override;
@@ -36,6 +38,7 @@ public:
 private:
 
 	TMat image;
+	TMat imageGray;
 	TMat depth;
 	TMat mask;
 	TMat normals;
@@ -79,12 +82,22 @@ template<typename TMat>
 void OdometryFrameImplTMat<TMat>::setImage(InputArray _image)
 {
 	this->image = getTMat<TMat>(_image);
+	Mat gray;
+	cvtColor(_image.getMat(), gray, COLOR_BGR2GRAY, 1);
+	gray.convertTo(gray, CV_8UC1);
+	this->imageGray = getTMat<TMat>(gray);
 }
 
 template<typename TMat>
 void OdometryFrameImplTMat<TMat>::getImage(OutputArray _image)
 {
 	_image.assign(this->image);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::getGrayImage(OutputArray _image)
+{
+	_image.assign(this->imageGray);
 }
 
 template<typename TMat>

@@ -12,11 +12,11 @@ bool prepareICPFrameBase(OdometryFrame frame)
     std::cout << "prepareICPFrameBase()" << std::endl;
     // Can be transformed into template argument in the future
     // when this algorithm supports OCL UMats too
-/*    
+ 
     typedef Mat TMat;
 
     TMat image;
-    frame.getImage(image);
+    frame.getGrayImage(image);
     if (image.empty())
     {
         if (frame.getPyramidLevels(OdometryFramePyramidType::PYR_IMAGE) > 0)
@@ -30,6 +30,7 @@ bool prepareICPFrameBase(OdometryFrame frame)
     }
     checkImage(image);
 
+/*
     TMat depth;
     frame->getDepth(depth);
     if (depth.empty())

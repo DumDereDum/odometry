@@ -55,9 +55,10 @@ int main(int argc, char** argv)
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
-        Mat odf_rgb, odf_depth, odf_mask;
+        Mat odf_rgb, odf_depth, odf_gray, odf_mask;
         odf.getImage(odf_rgb);
         odf.getDepth(odf_depth);
+        odf.getGrayImage(odf_gray);
         odf.getMask(odf_mask);
         
         if (display)
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
             imshow("rgb", rgb);
             imshow("odf_depth", odf_depth);
             imshow("odf_rgb", odf_rgb);
+            imshow("odf_gray", odf_gray);
             imshow("odf_mask", odf_mask);
             waitKey(10000);
         }
@@ -95,17 +97,19 @@ int main(int argc, char** argv)
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
-        Mat odf_rgb, odf_depth, odf_mask;
+        Mat odf_rgb, odf_depth, odf_gray, odf_mask;
         odf.getImage(odf_rgb);
         odf.getDepth(odf_depth);
+        odf.getGrayImage(odf_gray);
         odf.getMask(odf_mask);
-        
+
         if (display)
         {
             imshow("depth", depth);
             imshow("rgb", rgb);
             imshow("odf_depth", odf_depth);
             imshow("odf_rgb", odf_rgb);
+            imshow("odf_gray", odf_gray);
             imshow("odf_mask", odf_mask);
             waitKey(10000);
         }
@@ -135,17 +139,19 @@ int main(int argc, char** argv)
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
-        Mat odf_rgb, odf_depth, odf_mask;
+        Mat odf_rgb, odf_depth, odf_gray, odf_mask;
         odf.getImage(odf_rgb);
         odf.getDepth(odf_depth);
+        odf.getGrayImage(odf_gray);
         odf.getMask(odf_mask);
-        
+
         if (display)
         {
             imshow("depth", depth);
             imshow("rgb", rgb);
             imshow("odf_depth", odf_depth);
             imshow("odf_rgb", odf_rgb);
+            imshow("odf_gray", odf_gray);
             imshow("odf_mask", odf_mask);
             waitKey(10000);
         }

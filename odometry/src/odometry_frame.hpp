@@ -33,6 +33,7 @@ public:
 	~OdometryFrameImpl() {};
 	virtual void setImage(InputArray  image) = 0;
 	virtual void getImage(OutputArray image) = 0;
+	virtual void getGrayImage(OutputArray image) = 0;
 	virtual void setDepth(InputArray  depth) = 0;
 	virtual void getDepth(OutputArray depth) = 0;
 	virtual void setMask(InputArray  mask) = 0;
@@ -62,6 +63,7 @@ public:
 	~OdometryFrame() {};
 	void setImage(InputArray  image) { this->odometryFrame->setImage(image); }
 	void getImage(OutputArray image) { this->odometryFrame->getImage(image); }
+	void getGrayImage(OutputArray image) { this->odometryFrame->getGrayImage(image); }
 	void setDepth(InputArray  depth) { this->odometryFrame->setDepth(depth); }
 	void getDepth(OutputArray depth) { this->odometryFrame->getDepth(depth); }
 	void setMask(InputArray  mask) { this->odometryFrame->setMask(mask); }
