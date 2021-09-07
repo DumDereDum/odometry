@@ -3,7 +3,7 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "odometry_functions.hpp"
+#include "utils.hpp"
 #include "odometry_frame.hpp"
 
 using namespace cv;
@@ -76,7 +76,7 @@ OdometryFrame::OdometryFrame(InputArray image)
 
 template<typename TMat>
 OdometryFrameImplTMat<TMat>::OdometryFrameImplTMat(InputArray _image)
-	: pyramids(N_PYRAMIDS)
+	: pyramids(OdometryFramePyramidType::N_PYRAMIDS)
 {
 	image = getTMat<TMat>(_image);
 };
@@ -141,7 +141,7 @@ void OdometryFrameImplTMat<TMat>::setPyramidLevels(size_t _nLevels)
 template<typename TMat>
 size_t OdometryFrameImplTMat<TMat>::getPyramidLevels(OdometryFramePyramidType oftype)
 {
-	if (oftype < N_PYRAMIDS)
+	if (oftype < OdometryFramePyramidType::N_PYRAMIDS)
 		return pyramids[oftype].size();
 	else
 		return 0;

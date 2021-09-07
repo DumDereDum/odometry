@@ -1,4 +1,5 @@
 #include "odometry_rgb.hpp"
+#include "odometry_functions.hpp"
 
 OdometryRGB::OdometryRGB()
 {
@@ -13,6 +14,12 @@ bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 	std::cout << "OdometryRGB::compute()" << std::endl;
 	this->compute_corresps();
 	this->compute_Rt();
+	return true;
+}
+
+bool OdometryRGB::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
+{
+	std::cout << "OdometryICP::prepareFrames()" << std::endl;
 	return true;
 }
 

@@ -72,8 +72,12 @@ public:
 	void getMask(OutputArray mask) { this->odometryFrame->getMask(mask); }
 	void setNormals(InputArray  normals) { this->odometryFrame->setNormals(normals); }
 	void getNormals(OutputArray normals) { this->odometryFrame->getNormals(normals); }
-	void setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level) {};
-	void getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level) {};
+	void setPyramidLevels(size_t _nLevels) { this->odometryFrame->setPyramidLevels(_nLevels); }
+	size_t getPyramidLevels(OdometryFramePyramidType oftype) { return this->odometryFrame->getPyramidLevels(oftype); }
+	void setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level)
+		{ this->odometryFrame->setPyramidAt(img, pyrType, level); }
+	void getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level)
+		{ this->odometryFrame->getPyramidAt(img, pyrType, level); }
 
 	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 

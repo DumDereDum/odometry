@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     float depthFactor = 0.1;
     Ptr<Scene> scene = Scene::create(true, frameSize, intr, depthFactor);
 
+    
     std::vector<Affine3f> poses = scene->getPoses();
     AccessFlag af = ACCESS_RW;
     Mat depth = scene->depth(poses[1]);
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
     //imshow("depth", depth);
     //imshow("rgb", rgb);
     //waitKey(1000);
+
 
     OdometryFrame odf = OdometryFrame(Mat());
     //OdometryFrame odf = OdometryFrame(UMat());
@@ -54,9 +56,6 @@ int main(int argc, char** argv)
     //imshow("odf_rgb", odf_rgb);
     //imshow("odf_mask", odf_mask);
     //waitKey(60000);
-    
-    odf.prepareRGBFrame();
-
 
     /*
     Ptr<OdometryFrame> frame_prev = Ptr<OdometryFrame>(new OdometryFrame()),
@@ -64,13 +63,12 @@ int main(int argc, char** argv)
     Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
     */
 
-    ///*
     OdometrySettings ods;
     ods.setCameraMatrix(Mat());
 
     Odometry od_icp = Odometry(OdometryType::ICP, ods);
-    //OdometryFrame odf();
     Affine3f Rt;
+    od_icp.prepareFrames(odf, odf);
     od_icp.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
     
@@ -81,7 +79,6 @@ int main(int argc, char** argv)
     Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
     od_rgbd.compute(odf, odf, Rt.matrix);
     std::cout << std::endl;
-    //*/
 
     return 0;
 }

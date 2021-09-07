@@ -1,4 +1,5 @@
 #include "odometry_rgbd.hpp"
+#include "odometry_functions.hpp"
 
 OdometryRGBD::OdometryRGBD()
 {
@@ -13,6 +14,12 @@ bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Outpu
 	std::cout << "OdometryRGBD::compute()" << std::endl;
 	this->compute_corresps();
 	this->compute_Rt();
+	return true;
+}
+
+bool OdometryRGBD::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
+{
+	std::cout << "OdometryICP::prepareFrames()" << std::endl;
 	return true;
 }
 

@@ -33,3 +33,9 @@ bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArr
 	this->odometry->compute(srcFrame, dstFrame, Rt);
 	return true;
 }
+
+bool Odometry::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
+{
+	this->odometry->prepareFrames(srcFrame, dstFrame);
+	return true;
+}

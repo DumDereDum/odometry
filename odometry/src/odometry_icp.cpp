@@ -1,4 +1,5 @@
 #include "odometry_icp.hpp"
+#include "odometry_functions.hpp"
 
 OdometryICP::OdometryICP(/* args */)
 {
@@ -13,6 +14,13 @@ bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 	std::cout << "OdometryICP::compute()" << std::endl;
 	this->compute_corresps();
 	this->compute_Rt();
+	return true;
+}
+
+bool OdometryICP::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
+{
+	std::cout << "OdometryICP::prepareFrames()" << std::endl;
+	prepareICPFrame(srcFrame, dstFrame);
 	return true;
 }
 

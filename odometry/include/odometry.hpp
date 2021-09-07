@@ -26,6 +26,7 @@ public:
     ~OdometryImpl() {};
 
     virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const = 0;
+    virtual bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame) = 0;
 };
 
 class Odometry
@@ -37,6 +38,7 @@ public:
     ~Odometry();
 
     bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt);
+    bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame);
 };
 
 
