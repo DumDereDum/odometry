@@ -46,12 +46,8 @@ public:
 	virtual void getPyramidAt(OutputArray img,
 		OdometryFramePyramidType pyrType, size_t level) = 0;
 
-
 	virtual void findMask(InputArray image) = 0;
 
-	virtual void prepareICPFrame() = 0;
-	virtual void prepareRGBFrame() = 0;
-	virtual void prepareRGBDFrame() = 0;
 
 private:
 
@@ -80,10 +76,6 @@ public:
 		{ this->odometryFrame->getPyramidAt(img, pyrType, level); }
 
 	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
-
-	void prepareICPFrame()  { this->odometryFrame->prepareICPFrame(); };
-	void prepareRGBFrame()  { this->odometryFrame->prepareRGBFrame(); };
-	void prepareRGBDFrame() { this->odometryFrame->prepareRGBDFrame(); };
 };
 
 #endif // !ODOMETRY_FRAME_HPP

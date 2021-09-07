@@ -33,13 +33,7 @@ public:
 
 	virtual void findMask(InputArray image) override;
 
-	virtual void prepareICPFrame()  override;
-	virtual void prepareRGBFrame()  override;
-	virtual void prepareRGBDFrame() override;
-
 private:
-	Size prepareFrameCacheRGB();
-	Size prepareFrameCacheICP();
 
 	TMat image;
 	TMat depth;
@@ -171,36 +165,4 @@ void OdometryFrameImplTMat<TMat>::getPyramidAt(OutputArray _img, OdometryFramePy
 {
 	TMat img = pyramids[pyrType][level];
 	_img.assign(img);
-}
-
-template<typename TMat>
-void OdometryFrameImplTMat<TMat>::prepareICPFrame()
-{
-	this->prepareFrameCacheICP();
-}
-
-template<typename TMat>
-void OdometryFrameImplTMat<TMat>::prepareRGBFrame()
-{
-	this->prepareFrameCacheRGB();
-}
-
-template<typename TMat>
-void OdometryFrameImplTMat<TMat>::prepareRGBDFrame()
-{
-	this->prepareFrameCacheICP();
-	this->prepareFrameCacheRGB();
-}
-
-
-template<typename TMat>
-Size OdometryFrameImplTMat<TMat>::prepareFrameCacheRGB()
-{
-	return Mat().size();
-}
-
-template<typename TMat>
-Size OdometryFrameImplTMat<TMat>::prepareFrameCacheICP()
-{
-	return Mat().size();
 }
