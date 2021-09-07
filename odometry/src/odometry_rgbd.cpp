@@ -19,7 +19,7 @@ bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Outpu
 
 bool OdometryRGBD::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
-	std::cout << "OdometryICP::prepareFrames()" << std::endl;
+	std::cout << "OdometryRGBD::prepareFrames()" << std::endl;
 	return true;
 }
 
