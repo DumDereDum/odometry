@@ -12,6 +12,7 @@ public:
 	OdometryRGB();
 	~OdometryRGB();
 
+	virtual OdometryFrame createOdometryFrame() override;
 	virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 	virtual bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame);
 };

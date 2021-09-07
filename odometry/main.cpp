@@ -24,7 +24,7 @@ Matx33f intr = Matx33f(fx, 0, cx,
 //float depthFactor = 5000;
 float depthFactor = 0.1;
 
-bool display = true;
+bool display = false;
 bool icp     = true;
 bool rgb     = false;
 bool rgbd    = false;
@@ -46,7 +46,12 @@ int main(int argc, char** argv)
         Mat depth = scene->depth(poses[1]);
         Mat rgb = scene->rgb(poses[1]);
         
-        OdometryFrame odf = OdometryFrame(Mat());
+        OdometrySettings ods;
+        ods.setCameraMatrix(Mat());
+        Odometry od_icp = Odometry(OdometryType::ICP, ods);
+        //OdometryFrame odf = OdometryFrame(Mat());
+        OdometryFrame odf = od_icp.createOdometryFrame();
+
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
@@ -66,10 +71,10 @@ int main(int argc, char** argv)
         }
 
         /* ICP */
-        OdometrySettings ods;
-        ods.setCameraMatrix(Mat());
-
-        Odometry od_icp = Odometry(OdometryType::ICP, ods);
+        //OdometrySettings ods;
+        //ods.setCameraMatrix(Mat());
+        //Odometry od_icp = Odometry(OdometryType::ICP, ods);
+        
         Affine3f Rt;
         od_icp.prepareFrames(odf, odf);
         od_icp.compute(odf, odf, Rt.matrix);
@@ -81,7 +86,12 @@ int main(int argc, char** argv)
         Mat depth = scene->depth(poses[1]);
         Mat rgb = scene->rgb(poses[1]);
         
-        OdometryFrame odf = OdometryFrame(Mat());
+        OdometrySettings ods;
+        ods.setCameraMatrix(Mat());
+        Odometry od_rgb = Odometry(OdometryType::RGB, ods);
+        //OdometryFrame odf = OdometryFrame(Mat());
+        OdometryFrame odf = od_rgb.createOdometryFrame();
+        
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
@@ -101,11 +111,11 @@ int main(int argc, char** argv)
         }
 
         /* RGB */
-        OdometrySettings ods;
-        ods.setCameraMatrix(Mat());
+        //OdometrySettings ods;
+        //ods.setCameraMatrix(Mat());
+        //Odometry od_rgb = Odometry(OdometryType::RGB, ods);
+        
         Affine3f Rt;
-
-        Odometry od_rgb = Odometry(OdometryType::RGB, ods);
         od_rgb.prepareFrames(odf, odf);
         od_rgb.compute(odf, odf, Rt.matrix);
 
@@ -116,7 +126,12 @@ int main(int argc, char** argv)
         Mat depth = scene->depth(poses[1]);
         Mat rgb = scene->rgb(poses[1]);
         
-        OdometryFrame odf = OdometryFrame(Mat());
+        OdometrySettings ods;
+        ods.setCameraMatrix(Mat());
+        Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
+        //OdometryFrame odf = OdometryFrame(Mat());
+        OdometryFrame odf = od_rgbd.createOdometryFrame();
+        
         odf.setImage(rgb);
         odf.setDepth(depth);
         odf.findMask(depth);
@@ -136,11 +151,11 @@ int main(int argc, char** argv)
         }
 
         /* RGBD */
-        OdometrySettings ods;
-        ods.setCameraMatrix(Mat());
+        //OdometrySettings ods;
+        //ods.setCameraMatrix(Mat());
+        //Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
+        
         Affine3f Rt;
-
-        Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
         od_rgbd.prepareFrames(odf, odf);
         od_rgbd.compute(odf, odf, Rt.matrix);
 

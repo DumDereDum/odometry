@@ -21,10 +21,12 @@ class OdometryImpl
 private:
     virtual bool compute_corresps() const = 0;
     virtual bool compute_Rt() const = 0;
+    
 public:
     OdometryImpl() {};
     ~OdometryImpl() {};
-
+    
+    virtual OdometryFrame createOdometryFrame() = 0;
     virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const = 0;
     virtual bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame) = 0;
 };
@@ -36,7 +38,7 @@ private:
 public:
     Odometry(OdometryType otype, OdometrySettings settings);
     ~Odometry();
-
+    OdometryFrame createOdometryFrame() { return this->odometry->createOdometryFrame(); };
     bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt);
     bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame);
 };

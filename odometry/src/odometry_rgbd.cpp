@@ -9,6 +9,12 @@ OdometryRGBD::~OdometryRGBD()
 {
 }
 
+OdometryFrame OdometryRGBD::createOdometryFrame()
+{
+	std::cout << "OdometryRGBD::createOdometryFrame()" << std::endl;
+	return OdometryFrame(Mat());
+}
+
 bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryRGBD::compute()" << std::endl;

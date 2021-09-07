@@ -9,6 +9,12 @@ OdometryRGB::~OdometryRGB()
 {
 }
 
+OdometryFrame OdometryRGB::createOdometryFrame()
+{
+	std::cout << "OdometryRGB::createOdometryFrame()" << std::endl;
+	return OdometryFrame(Mat());
+}
+
 bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryRGB::compute()" << std::endl;

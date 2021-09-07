@@ -9,6 +9,12 @@ OdometryICP::~OdometryICP()
 {
 }
 
+OdometryFrame OdometryICP::createOdometryFrame()
+{
+	std::cout << "OdometryICP::createOdometryFrame()" << std::endl;
+	return OdometryFrame(Mat());
+}
+
 bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryICP::compute()" << std::endl;
