@@ -1,13 +1,19 @@
 #include "odometry_functions.hpp"
 
-bool prepareRGBFrame(OdometryFrame srcFrame, OdometryFrame dstFrame)
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+
+const std::vector<int> iterCounts = { 7, 7, 7, 10 };
+
+bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame)
 {
     std::cout << "prepareRGBFrame()" << std::endl;
     prepareRGBFrameBase(srcFrame);
 	return true;
 }
 
-bool prepareRGBFrameBase(OdometryFrame frame)
+bool prepareRGBFrameBase(OdometryFrame& frame)
 {
     std::cout << "prepareRGBFrameBase()" << std::endl;
     // Can be transformed into template argument in the future
@@ -63,10 +69,11 @@ bool prepareRGBFrameBase(OdometryFrame frame)
         frame.setMask(pyr0);
     }
     checkMask(mask, image.size());
-/*
-    auto tframe = frame.dynamicCast<OdometryFrameImpl<TMat>>();
-    preparePyramidImage(image, tframe->pyramids[OdometryFramePyramidType::PYR_IMAGE], iterCounts.size());
 
+    std::vector<TMat> pyramids;
+    preparePyramidImage(image, pyramids, iterCounts.size());
+    setPyramids(frame, OdometryFramePyramidType::PYR_IMAGE, pyramids);
+/*
     preparePyramidDepth(depth, tframe->pyramids[OdometryFramePyramidType::PYR_DEPTH], iterCounts.size());
 
     preparePyramidMask<TMat>(mask, tframe->pyramids[OdometryFramePyramidType::PYR_DEPTH], (float)minDepth, (float)maxDepth,
@@ -85,3 +92,31 @@ bool prepareRGBFrameDst(OdometryFrame frame)
 	return true;
 }
 
+static
+void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount)
+{
+    if (!pyramidImage.empty())
+    {
+        size_t nLevels = pyramidImage.size(-1).width;
+        if (nLevels < levelCount)
+            CV_Error(Error::StsBadSize, "Levels count of pyramidImage has to be equal or less than size of iterCounts.");
+
+        CV_Assert(pyramidImage.size(0) == image.size());
+        for (size_t i = 0; i < nLevels; i++)
+            CV_Assert(pyramidImage.type((int)i) == image.type());
+    }
+    else
+        buildPyramid(image, pyramidImage, (int)levelCount - 1);
+}
+
+void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage)
+{
+    size_t nLevels = pyramidImage.size(-1).width;
+    std::vector<Mat> pyramids;
+    pyramidImage.getMatVector(pyramids);
+    odf.setPyramidLevels(nLevels);
+    for (size_t l = 0; l < nLevels; l++)
+    {
+        odf.setPyramidAt(pyramids[l], oftype, l);
+    }
+}

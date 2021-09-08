@@ -28,8 +28,20 @@ void displayOdometryFrame(Mat depth, Mat rgb, OdometryFrame odf)
     imshow("odf_gray", odf_gray);
     imshow("odf_mask", odf_mask);
     waitKey(10000);
-
 }
+
+void displayOdometryPyrs(OdometryFrame odf, OdometryFramePyramidType oftype)
+{
+    size_t nLevels = odf.getPyramidLevels(oftype);
+    for (size_t l = 0; l < nLevels; l++)
+    {
+        Mat img;
+        odf.getPyramidAt(img, oftype, l);
+        imshow("pyrImg", img);
+        waitKey(1000);
+    }
+}
+
 
 Size frameSize = Size(640, 480);
 float fx = 525.f;
@@ -105,8 +117,9 @@ int main(int argc, char** argv)
         Mat odf_rgb, odf_depth, odf_gray, odf_mask;
         
         if (display)
+        {
             displayOdometryFrame(depth, rgb, odf);
-
+        }
         /* RGB */
         //OdometrySettings ods;
         //ods.setCameraMatrix(Mat());
@@ -114,6 +127,9 @@ int main(int argc, char** argv)
         
         Affine3f Rt;
         od_rgb.prepareFrames(odf, odf);
+
+        //displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_IMAGE);
+
         od_rgb.compute(odf, odf, Rt.matrix);
 
     }

@@ -52,11 +52,13 @@ void checkNormals(InputArray normals, const Size& depthSize)
         std::cout << "Normals type has to be CV_32FC3." << std::endl;
 }
 //Size prepareFramesCache(OdometryFrame srcFrame, OdometryFrame dstFrame);
-bool prepareRGBFrame(OdometryFrame srcFrame, OdometryFrame dstFrame);
-bool prepareRGBFrameBase(OdometryFrame frame);
+bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame);
+bool prepareRGBFrameBase(OdometryFrame& frame);
 bool prepareRGBFrameSrc (OdometryFrame frame);
 bool prepareRGBFrameDst (OdometryFrame frame);
-//Size prepareRGBFrame(OdometryFrame srcFrame, OdometryFrame dstFrame);
-//Size prepareRGBDFrame(OdometryFrame srcFrame, OdometryFrame dstFrame);
+
+void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
+static void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount);
+
 
 #endif //ODOMETRY_FUNCTIONS_HPP
