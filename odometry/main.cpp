@@ -128,7 +128,8 @@ int main(int argc, char** argv)
         Affine3f Rt;
         od_rgb.prepareFrames(odf, odf);
 
-        //displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_IMAGE);
+        displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_IMAGE);
+        displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_DEPTH);
 
         od_rgb.compute(odf, odf, Rt.matrix);
 

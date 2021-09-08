@@ -70,12 +70,16 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
     }
     checkMask(mask, image.size());
 
-    std::vector<TMat> pyramids;
-    preparePyramidImage(image, pyramids, iterCounts.size());
-    setPyramids(frame, OdometryFramePyramidType::PYR_IMAGE, pyramids);
-/*
-    preparePyramidDepth(depth, tframe->pyramids[OdometryFramePyramidType::PYR_DEPTH], iterCounts.size());
+    std::vector<TMat> ipyramids;
+    preparePyramidImage(image, ipyramids, iterCounts.size());
+    setPyramids(frame, OdometryFramePyramidType::PYR_IMAGE, ipyramids);
 
+    std::vector<TMat> dpyramids;
+    preparePyramidImage(depth, dpyramids, iterCounts.size());
+    setPyramids(frame, OdometryFramePyramidType::PYR_DEPTH, dpyramids);
+
+    
+/*
     preparePyramidMask<TMat>(mask, tframe->pyramids[OdometryFramePyramidType::PYR_DEPTH], (float)minDepth, (float)maxDepth,
         tframe->pyramids[OdometryFramePyramidType::PYR_NORM], tframe->pyramids[OdometryFramePyramidType::PYR_MASK]);
 */
