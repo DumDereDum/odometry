@@ -60,5 +60,11 @@ bool prepareRGBFrameDst (OdometryFrame frame);
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
 static void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount);
 
+template<typename TMat>
+void preparePyramidMask(InputArray mask,
+    InputArrayOfArrays pyramidDepth,
+    float minDepth, float maxDepth,
+    InputArrayOfArrays pyramidNormal,
+    InputOutputArrayOfArrays pyramidMask);
 
 #endif //ODOMETRY_FUNCTIONS_HPP
