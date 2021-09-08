@@ -1,15 +1,15 @@
 #include "odometry_functions.hpp"
 
-bool prepareICPFrame(OdometryFrame srcFrame, OdometryFrame dstFrame)
+bool prepareRGBFrame(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
-    std::cout << "prepareICPFrame()" << std::endl;
-    prepareICPFrameBase(srcFrame);
+    std::cout << "prepareRGBFrame()" << std::endl;
+    prepareRGBFrameBase(srcFrame);
 	return true;
 }
 
-bool prepareICPFrameBase(OdometryFrame frame)
+bool prepareRGBFrameBase(OdometryFrame frame)
 {
-    std::cout << "prepareICPFrameBase()" << std::endl;
+    std::cout << "prepareRGBFrameBase()" << std::endl;
     // Can be transformed into template argument in the future
     // when this algorithm supports OCL UMats too
  
@@ -30,24 +30,24 @@ bool prepareICPFrameBase(OdometryFrame frame)
     }
     checkImage(image);
 
-/*
+
     TMat depth;
-    frame->getDepth(depth);
+    frame.getDepth(depth);
     if (depth.empty())
     {
-        if (frame->getPyramidLevels(OdometryFramePyramidType::PYR_DEPTH) > 0)
+        if (frame.getPyramidLevels(OdometryFramePyramidType::PYR_DEPTH) > 0)
         {
             TMat pyr0;
-            frame->getPyramidAt(pyr0, OdometryFramePyramidType::PYR_DEPTH, 0);
-            frame->setDepth(pyr0);
+            frame.getPyramidAt(pyr0, OdometryFramePyramidType::PYR_DEPTH, 0);
+            frame.setDepth(pyr0);
         }
-        else if (frame->getPyramidLevels(OdometryFramePyramidType::PYR_CLOUD) > 0)
+        else if (frame.getPyramidLevels(OdometryFramePyramidType::PYR_CLOUD) > 0)
         {
             TMat cloud;
-            frame->getPyramidAt(cloud, OdometryFramePyramidType::PYR_CLOUD, 0);
+            frame.getPyramidAt(cloud, OdometryFramePyramidType::PYR_CLOUD, 0);
             std::vector<TMat> xyz;
             split(cloud, xyz);
-            frame->setDepth(xyz[2]);
+            frame.setDepth(xyz[2]);
         }
         else
             CV_Error(Error::StsBadSize, "Depth or pyramidDepth or pyramidCloud have to be set.");
@@ -55,15 +55,15 @@ bool prepareICPFrameBase(OdometryFrame frame)
     checkDepth(depth, image.size());
 
     TMat mask;
-    frame->getMask(mask);
-    if (mask.empty() && frame->getPyramidLevels(OdometryFramePyramidType::PYR_MASK) > 0)
+    frame.getMask(mask);
+    if (mask.empty() && frame.getPyramidLevels(OdometryFramePyramidType::PYR_MASK) > 0)
     {
         TMat pyr0;
-        frame->getPyramidAt(pyr0, OdometryFramePyramidType::PYR_MASK, 0);
-        frame->setMask(pyr0);
+        frame.getPyramidAt(pyr0, OdometryFramePyramidType::PYR_MASK, 0);
+        frame.setMask(pyr0);
     }
     checkMask(mask, image.size());
-
+/*
     auto tframe = frame.dynamicCast<OdometryFrameImpl<TMat>>();
     preparePyramidImage(image, tframe->pyramids[OdometryFramePyramidType::PYR_IMAGE], iterCounts.size());
 
@@ -75,12 +75,12 @@ bool prepareICPFrameBase(OdometryFrame frame)
 	return true;
 }
 
-bool prepareICPFrameSrc(OdometryFrame frame)
+bool prepareRGBFrameSrc(OdometryFrame frame)
 {
 	return true;
 }
 
-bool prepareICPFrameDst(OdometryFrame frame)
+bool prepareRGBFrameDst(OdometryFrame frame)
 {
 	return true;
 }

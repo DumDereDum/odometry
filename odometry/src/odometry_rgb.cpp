@@ -26,6 +26,7 @@ bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 bool OdometryRGB::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	std::cout << "OdometryRGB::prepareFrames()" << std::endl;
+	prepareRGBFrame(srcFrame, dstFrame);
 	return true;
 }
 

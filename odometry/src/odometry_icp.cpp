@@ -26,7 +26,7 @@ bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 bool OdometryICP::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	std::cout << "OdometryICP::prepareFrames()" << std::endl;
-	prepareICPFrame(srcFrame, dstFrame);
+	//prepareICPFrame(srcFrame, dstFrame);
 	return true;
 }
 
