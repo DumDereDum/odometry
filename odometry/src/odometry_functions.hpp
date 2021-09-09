@@ -58,13 +58,25 @@ bool prepareRGBFrameSrc (OdometryFrame frame);
 bool prepareRGBFrameDst (OdometryFrame frame);
 
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
+std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype);
+
 static void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount);
 
 template<typename TMat>
-void preparePyramidMask(InputArray mask,
-    InputArrayOfArrays pyramidDepth,
-    float minDepth, float maxDepth,
-    InputArrayOfArrays pyramidNormal,
-    InputOutputArrayOfArrays pyramidMask);
+void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float minDepth, float maxDepth, InputArrayOfArrays pyramidNormal, InputOutputArrayOfArrays pyramidMask);
+
+template<typename TMat>
+void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraMatrix, InputOutputArrayOfArrays pyramidCloud);
+
+static
+void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vector<Matx33f>& pyramidCameraMatrix);
+
+//template<typename TMat>
+//void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel);
+
+
+
+
+
 
 #endif //ODOMETRY_FUNCTIONS_HPP

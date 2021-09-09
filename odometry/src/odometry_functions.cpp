@@ -5,14 +5,20 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 
+const cv::Matx33f cameraMatrix = { /* fx, 0, cx*/ 0, 0, 0, /* 0, fy, cy */ 0, 0, 0, /**/ 0, 0, 0 };
 const std::vector<int> iterCounts = { 7, 7, 7, 10 };
 const float minDepth = 0.f;
 const float maxDepth = 4.f;
+static const int sobelSize = 3;
+static const double sobelScale = 1. / 8.;
+static const int normalWinSize = 5;
 
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame)
 {
     std::cout << "prepareRGBFrame()" << std::endl;
     prepareRGBFrameBase(srcFrame);
+    prepareRGBFrameSrc(srcFrame);
+
 	return true;
 }
 
@@ -87,21 +93,31 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
         npyramids, mpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_MASK, mpyramids);
 
-
-/*
-    preparePyramidMask<TMat>(mask, tframe->pyramids[OdometryFramePyramidType::PYR_DEPTH], (float)minDepth, (float)maxDepth,
-        tframe->pyramids[OdometryFramePyramidType::PYR_NORM], tframe->pyramids[OdometryFramePyramidType::PYR_MASK]);
-*/
 	return true;
 }
 
 bool prepareRGBFrameSrc(OdometryFrame frame)
 {
+    typedef Mat TMat;
+    std::vector<TMat> dpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_DEPTH);
+    std::vector<TMat> cpyramids;
+    preparePyramidCloud<TMat>(dpyramids, cameraMatrix, cpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_CLOUD, cpyramids);
 	return true;
 }
 
 bool prepareRGBFrameDst(OdometryFrame frame)
 {
+    //typedef Mat TMat;
+    //std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
+    //std::vector<TMat> dxpyramids, dypyramids;
+    //preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids);
+    //preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids);
+
+    /*
+    preparePyramidTexturedMask(tframe->pyramids[OdometryFrame::PYR_DIX], tframe->pyramids[OdometryFrame::PYR_DIY], minGradientMagnitudes,
+                               tframe->pyramids[OdometryFrame::PYR_MASK], maxPointsPart, tframe->pyramids[OdometryFrame::PYR_TEXMASK]);
+    */
 	return true;
 }
 
@@ -134,6 +150,18 @@ void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArray
     }
 }
 
+std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype)
+{
+    size_t nLevels = odf.getPyramidLevels(oftype);
+    std::vector<Mat> pyramids;
+    for (size_t l = 0; l < nLevels; l++)
+    {
+        Mat img;
+        odf.getPyramidAt(img, oftype, l);
+        pyramids.push_back(img);
+    }
+    return pyramids;
+}
 
 template<typename TMat>
 void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float minDepth, float maxDepth,
@@ -198,3 +226,75 @@ void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float 
     }
 }
 
+template<typename TMat>
+static
+void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraMatrix, InputOutputArrayOfArrays pyramidCloud)
+{
+    size_t depthSize = pyramidDepth.size(-1).width;
+    size_t cloudSize = pyramidCloud.size(-1).width;
+    if (!pyramidCloud.empty())
+    {
+        if (cloudSize != depthSize)
+            CV_Error(Error::StsBadSize, "Incorrect size of pyramidCloud.");
+
+        for (size_t i = 0; i < depthSize; i++)
+        {
+            CV_Assert(pyramidCloud.size((int)i) == pyramidDepth.size((int)i));
+            CV_Assert(pyramidCloud.type((int)i) == CV_32FC3);
+        }
+    }
+    else
+    {
+        std::vector<Matx33f> pyramidCameraMatrix;
+        buildPyramidCameraMatrix(cameraMatrix, (int)depthSize, pyramidCameraMatrix);
+
+        pyramidCloud.create((int)depthSize, 1, CV_32FC3, -1);
+        for (size_t i = 0; i < depthSize; i++)
+        {
+            TMat cloud;
+            depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud);
+            getTMatRef<TMat>(pyramidCloud, (int)i) = cloud;
+        }
+    }
+}
+
+static
+void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vector<Matx33f>& pyramidCameraMatrix)
+{
+    pyramidCameraMatrix.resize(levels);
+
+    for (int i = 0; i < levels; i++)
+    {
+        Matx33f levelCameraMatrix = (i == 0) ? cameraMatrix : 0.5f * pyramidCameraMatrix[i - 1];
+        levelCameraMatrix(2, 2) = 1.0;
+        pyramidCameraMatrix[i] = levelCameraMatrix;
+    }
+}
+
+/*
+template<typename TMat>
+void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel)
+{
+    size_t imgLevels = pyramidImage.size(-1).width;
+    size_t sobelLvls = pyramidSobel.size(-1).width;
+    if (!pyramidSobel.empty())
+    {
+        if (sobelLvls != imgLevels)
+            CV_Error(Error::StsBadSize, "Incorrect size of pyramidSobel.");
+
+        for (size_t i = 0; i < sobelLvls; i++)
+        {
+            CV_Assert(pyramidSobel.size((int)i) == pyramidImage.size((int)i));
+            CV_Assert(pyramidSobel.type((int)i) == CV_16SC1);
+        }
+    }
+    else
+    {
+        pyramidSobel.create((int)imgLevels, 1, CV_16SC1, -1);
+        for (size_t i = 0; i < imgLevels; i++)
+        {
+            Sobel(getTMat<TMat>(pyramidImage, (int)i), getTMatRef<TMat>(pyramidSobel, (int)i), CV_16S, dx, dy, sobelSize);
+        }
+    }
+}
+*/
