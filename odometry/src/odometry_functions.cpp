@@ -21,6 +21,7 @@ bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame)
     std::cout << "prepareRGBFrame()" << std::endl;
     prepareRGBFrameBase(srcFrame);
     prepareRGBFrameSrc(srcFrame);
+    prepareRGBFrameDst(dstFrame);
 
 	return true;
 }
@@ -99,7 +100,7 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
 	return true;
 }
 
-bool prepareRGBFrameSrc(OdometryFrame frame)
+bool prepareRGBFrameSrc(OdometryFrame& frame)
 {
     std::cout << "prepareRGBFrameSrc()" << std::endl;
     typedef Mat TMat;
@@ -111,7 +112,7 @@ bool prepareRGBFrameSrc(OdometryFrame frame)
 	return true;
 }
 
-bool prepareRGBFrameDst(OdometryFrame frame)
+bool prepareRGBFrameDst(OdometryFrame& frame)
 {
     std::cout << "prepareRGBFrameDst()" << std::endl;
     //typedef Mat TMat;
@@ -260,6 +261,7 @@ void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraM
             TMat cloud;
             depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud, getTMat<TMat>(pyramidMask, (int)i));
             getTMatRef<TMat>(pyramidCloud, (int)i) = cloud;
+
         }
     }
 }

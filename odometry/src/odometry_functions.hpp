@@ -56,8 +56,8 @@ void checkNormals(InputArray normals, const Size& depthSize)
 //Size prepareFramesCache(OdometryFrame srcFrame, OdometryFrame dstFrame);
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame);
 bool prepareRGBFrameBase(OdometryFrame& frame);
-bool prepareRGBFrameSrc (OdometryFrame frame);
-bool prepareRGBFrameDst (OdometryFrame frame);
+bool prepareRGBFrameSrc (OdometryFrame& frame);
+bool prepareRGBFrameDst (OdometryFrame& frame);
 
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
 std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype);

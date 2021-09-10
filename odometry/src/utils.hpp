@@ -96,14 +96,14 @@ static TMat getTMat(InputArray, int = -1);
 template<>
 Mat getTMat<Mat>(InputArray a, int i)
 {
-    std::cout << "getTMat<Mat>" << std::endl;
+    //std::cout << "getTMat<Mat>" << std::endl;
     return a.getMat(i);
 }
 
 template<>
 UMat getTMat<UMat>(InputArray a, int i)
 {
-    std::cout << "getTMat<UMat>" << std::endl;
+    //std::cout << "getTMat<UMat>" << std::endl;
     return a.getUMat(i);
 }
 
