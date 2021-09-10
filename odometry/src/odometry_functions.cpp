@@ -1,9 +1,12 @@
 #include "odometry_functions.hpp"
-#include "utils.hpp"
+//#include "utils.hpp"
+#include "../include/depth_to_3d.hpp"
 
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
+
+using namespace cv;
 
 const cv::Matx33f cameraMatrix = { /* fx, 0, cx*/ 0, 0, 0, /* 0, fy, cy */ 0, 0, 0, /**/ 0, 0, 0 };
 const std::vector<int> iterCounts = { 7, 7, 7, 10 };
@@ -98,16 +101,19 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
 
 bool prepareRGBFrameSrc(OdometryFrame frame)
 {
+    std::cout << "prepareRGBFrameSrc()" << std::endl;
     typedef Mat TMat;
     std::vector<TMat> dpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_DEPTH);
+    std::vector<TMat> mpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_MASK);
     std::vector<TMat> cpyramids;
-    preparePyramidCloud<TMat>(dpyramids, cameraMatrix, cpyramids);
+    preparePyramidCloud<TMat>(dpyramids, cameraMatrix, cpyramids, mpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_CLOUD, cpyramids);
 	return true;
 }
 
 bool prepareRGBFrameDst(OdometryFrame frame)
 {
+    std::cout << "prepareRGBFrameDst()" << std::endl;
     //typedef Mat TMat;
     //std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
     //std::vector<TMat> dxpyramids, dypyramids;
@@ -228,7 +234,7 @@ void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float 
 
 template<typename TMat>
 static
-void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraMatrix, InputOutputArrayOfArrays pyramidCloud)
+void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraMatrix, InputOutputArrayOfArrays pyramidCloud, InputArrayOfArrays pyramidMask)
 {
     size_t depthSize = pyramidDepth.size(-1).width;
     size_t cloudSize = pyramidCloud.size(-1).width;
@@ -252,7 +258,7 @@ void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraM
         for (size_t i = 0; i < depthSize; i++)
         {
             TMat cloud;
-            depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud);
+            depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud, getTMat<TMat>(pyramidMask, (int)i));
             getTMatRef<TMat>(pyramidCloud, (int)i) = cloud;
         }
     }

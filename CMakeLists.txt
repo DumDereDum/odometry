@@ -28,5 +28,9 @@ set(ODOMETRY_IMPL
 	odometry/src/odometry_functions.hpp
 	odometry/src/odometry_functions.cpp
 	)
-	
-add_executable(main ${MAIN} ${INCLUDE} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL})
+set(DEPTH_TO_3D
+	odometry/include/depth_to_3d.hpp
+	odometry/include/depth_to_3d.cpp
+)
+
+add_executable(main ${MAIN} ${INCLUDE} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL} ${DEPTH_TO_3D})
