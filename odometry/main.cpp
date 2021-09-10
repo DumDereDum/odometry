@@ -30,14 +30,14 @@ void displayOdometryFrame(Mat depth, Mat rgb, OdometryFrame odf)
     waitKey(10000);
 }
 
-void displayOdometryPyrs(OdometryFrame odf, OdometryFramePyramidType oftype)
+void displayOdometryPyrs(String name, OdometryFrame odf, OdometryFramePyramidType oftype)
 {
     size_t nLevels = odf.getPyramidLevels(oftype);
     for (size_t l = 0; l < nLevels; l++)
     {
         Mat img;
         odf.getPyramidAt(img, oftype, l);
-        imshow("pyrImg", img);
+        imshow(name, img);
         waitKey(1000);
     }
 }
@@ -129,9 +129,11 @@ int main(int argc, char** argv)
         od_rgb.prepareFrames(odf, odf);
         if (display)
         {
-            displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_IMAGE);
-            displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_DEPTH);
-            displayOdometryPyrs(odf, OdometryFramePyramidType::PYR_MASK);
+            displayOdometryPyrs("PYR_IMAGE", odf, OdometryFramePyramidType::PYR_IMAGE);
+            displayOdometryPyrs("PYR_DEPTH", odf, OdometryFramePyramidType::PYR_DEPTH);
+            displayOdometryPyrs("PYR_MASK", odf, OdometryFramePyramidType::PYR_MASK);
+            displayOdometryPyrs("PYR_DIX", odf, OdometryFramePyramidType::PYR_DIX);
+            displayOdometryPyrs("PYR_DIY" ,odf, OdometryFramePyramidType::PYR_DIY);
         }
         od_rgb.compute(odf, odf, Rt.matrix);
 

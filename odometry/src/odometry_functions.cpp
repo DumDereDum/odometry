@@ -115,17 +115,18 @@ bool prepareRGBFrameSrc(OdometryFrame& frame)
 bool prepareRGBFrameDst(OdometryFrame& frame)
 {
     std::cout << "prepareRGBFrameDst()" << std::endl;
-    //typedef Mat TMat;
-    //std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
-    //std::vector<TMat> dxpyramids, dypyramids;
-    //preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids);
-    //preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids);
-
-    /*
-    preparePyramidTexturedMask(tframe->pyramids[OdometryFrame::PYR_DIX], tframe->pyramids[OdometryFrame::PYR_DIY], minGradientMagnitudes,
-                               tframe->pyramids[OdometryFrame::PYR_MASK], maxPointsPart, tframe->pyramids[OdometryFrame::PYR_TEXMASK]);
-    */
-	return true;
+    typedef Mat TMat;
+    std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
+    std::vector<TMat> dxpyramids, dypyramids;
+    preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids);
+    preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_DIX, dxpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_DIY, dypyramids);
+    
+    imshow("img", ipyramids[1]);
+    imshow("dx", dxpyramids[1]);
+    waitKey(10000);
+    return true;
 }
 
 static
@@ -279,7 +280,7 @@ void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vect
     }
 }
 
-/*
+
 template<typename TMat>
 void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel)
 {
@@ -305,4 +306,4 @@ void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputO
         }
     }
 }
-*/
+
