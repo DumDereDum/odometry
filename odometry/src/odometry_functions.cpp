@@ -304,3 +304,162 @@ void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputO
     }
 }
 
+
+static
+bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
+                         const OdometryFrame srcFrame,
+                         const OdometryFrame dstFrame,
+                         const Matx33f& cameraMatrix,
+                         float maxDepthDiff, const std::vector<int>& iterCounts,
+                         double maxTranslation, double maxRotation,
+                         int method, int transfromType)
+{
+    int transformDim = -1;
+    CalcRgbdEquationCoeffsPtr rgbdEquationFuncPtr = 0;
+    CalcICPEquationCoeffsPtr icpEquationFuncPtr = 0;
+    switch(transfromType)
+    {
+    case OdometryTransformType::RIGID_BODY_MOTION:
+        transformDim = 6;
+        rgbdEquationFuncPtr = calcRgbdEquationCoeffs;
+        icpEquationFuncPtr = calcICPEquationCoeffs;
+        break;
+    case OdometryTransformType::ROTATION:
+        transformDim = 3;
+        rgbdEquationFuncPtr = calcRgbdEquationCoeffsRotation;
+        icpEquationFuncPtr = calcICPEquationCoeffsRotation;
+        break;
+    case OdometryTransformType::TRANSLATION:
+        transformDim = 3;
+        rgbdEquationFuncPtr = calcRgbdEquationCoeffsTranslation;
+        icpEquationFuncPtr = calcICPEquationCoeffsTranslation;
+        break;
+    default:
+        CV_Error(Error::StsBadArg, "Incorrect transformation type");
+    }
+/*
+    const int minOverdetermScale = 20;
+    const int minCorrespsCount = minOverdetermScale * transformDim;
+
+    std::vector<Matx33f> pyramidCameraMatrix;
+    buildPyramidCameraMatrix(cameraMatrix, (int)iterCounts.size(), pyramidCameraMatrix);
+
+    Mat resultRt = initRt.empty() ? Mat::eye(4,4,CV_64FC1) : initRt.clone();
+    Mat currRt, ksi;
+
+    bool isOk = false;
+    for(int level = (int)iterCounts.size() - 1; level >= 0; level--)
+    {
+        const Matx33f& levelCameraMatrix = pyramidCameraMatrix[level];
+        const Matx33f& levelCameraMatrix_inv = levelCameraMatrix.inv(DECOMP_SVD);
+        const Mat srcLevelDepth, dstLevelDepth;
+        srcFrame.getPyramidAt(srcLevelDepth, OdometryFramePyramidType::PYR_DEPTH, level);
+        dstFrame.getPyramidAt(dstLevelDepth, OdometryFramePyramidType::PYR_DEPTH, level);
+
+        const double fx = levelCameraMatrix(0, 0);
+        const double fy = levelCameraMatrix(1, 1);
+        const double determinantThreshold = 1e-6;
+
+        Mat AtA_rgbd, AtB_rgbd, AtA_icp, AtB_icp;
+        Mat corresps_rgbd, corresps_icp;
+
+        // Run transformation search on current level iteratively.
+        for(int iter = 0; iter < iterCounts[level]; iter ++)
+        {
+            Mat resultRt_inv = resultRt.inv(DECOMP_SVD);
+
+            const Mat pyramidMask;
+            srcFrame->getPyramidAt(pyramidMask, OdometryFramePyramidType::PYR_MASK, level);
+
+            if(method & RGBD_ODOMETRY)
+            {
+                const Mat pyramidTexturedMask;
+                dstFrame->getPyramidAt(pyramidTexturedMask, OdometryFramePyramidType::PYR_TEXMASK, level);
+                computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
+                                srcLevelDepth, pyramidMask, dstLevelDepth, pyramidTexturedMask,
+                                maxDepthDiff, corresps_rgbd);
+            }
+
+            if(method & ICP_ODOMETRY)
+            {
+                const Mat pyramidNormalsMask;
+                dstFrame->getPyramidAt(pyramidNormalsMask, OdometryFramePyramidType::PYR_NORMMASK, level);
+                computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
+                                srcLevelDepth, pyramidMask, dstLevelDepth, pyramidNormalsMask,
+                                maxDepthDiff, corresps_icp);
+            }
+
+            if(corresps_rgbd.rows < minCorrespsCount && corresps_icp.rows < minCorrespsCount)
+                break;
+
+            const Mat srcPyrCloud;
+            srcFrame->getPyramidAt(srcPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
+
+
+            Mat AtA(transformDim, transformDim, CV_64FC1, Scalar(0)), AtB(transformDim, 1, CV_64FC1, Scalar(0));
+            if(corresps_rgbd.rows >= minCorrespsCount)
+            {
+                const Mat srcPyrImage, dstPyrImage, dstPyrIdx, dstPyrIdy;
+                srcFrame->getPyramidAt(srcPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
+                dstFrame->getPyramidAt(dstPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
+                dstFrame->getPyramidAt(dstPyrIdx, OdometryFramePyramidType::PYR_DIX, level);
+                dstFrame->getPyramidAt(dstPyrIdy, OdometryFramePyramidType::PYR_DIY, level);
+                calcRgbdLsmMatrices(srcPyrImage, srcPyrCloud, resultRt, dstPyrImage, dstPyrIdx, dstPyrIdy,
+                                    corresps_rgbd, fx, fy, sobelScale,
+                                    AtA_rgbd, AtB_rgbd, rgbdEquationFuncPtr, transformDim);
+
+                AtA += AtA_rgbd;
+                AtB += AtB_rgbd;
+            }
+            if(corresps_icp.rows >= minCorrespsCount)
+            {
+                const Mat dstPyrCloud, dstPyrNormals;
+                dstFrame->getPyramidAt(dstPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
+                dstFrame->getPyramidAt(dstPyrNormals, OdometryFramePyramidType::PYR_NORM, level);
+                calcICPLsmMatrices(srcPyrCloud, resultRt, dstPyrCloud, dstPyrNormals,
+                                   corresps_icp, AtA_icp, AtB_icp, icpEquationFuncPtr, transformDim);
+                AtA += AtA_icp;
+                AtB += AtB_icp;
+            }
+
+            bool solutionExist = solveSystem(AtA, AtB, determinantThreshold, ksi);
+            if(!solutionExist)
+                break;
+
+            if(transfromType == Odometry::ROTATION)
+            {
+                Mat tmp(6, 1, CV_64FC1, Scalar(0));
+                ksi.copyTo(tmp.rowRange(0,3));
+                ksi = tmp;
+            }
+            else if(transfromType == Odometry::TRANSLATION)
+            {
+                Mat tmp(6, 1, CV_64FC1, Scalar(0));
+                ksi.copyTo(tmp.rowRange(3,6));
+                ksi = tmp;
+            }
+
+            computeProjectiveMatrix(ksi, currRt);
+            resultRt = currRt * resultRt;
+            isOk = true;
+        }
+    }
+    _Rt.create(resultRt.size(), resultRt.type());
+    Mat Rt = _Rt.getMat();
+    resultRt.copyTo(Rt);
+
+    if(isOk)
+    {
+        Mat deltaRt;
+        if(initRt.empty())
+            deltaRt = resultRt;
+        else
+            deltaRt = resultRt * initRt.inv(DECOMP_SVD);
+
+        isOk = testDeltaTransformation(deltaRt, maxTranslation, maxRotation);
+    }
+
+    return isOk;
+*/
+    return true;
+}

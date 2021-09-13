@@ -5,6 +5,11 @@
 
 using namespace cv;
 
+enum OdometryTransformType
+{
+    ROTATION = 1, TRANSLATION = 2, RIGID_BODY_MOTION = 4
+};
+
 static inline
 void checkImage(InputArray image)
 {
@@ -53,7 +58,84 @@ void checkNormals(InputArray normals, const Size& depthSize)
         //CV_Error(Error::StsBadSize, "Normals type has to be CV_32FC3.");
         std::cout << "Normals type has to be CV_32FC3." << std::endl;
 }
-//Size prepareFramesCache(OdometryFrame srcFrame, OdometryFrame dstFrame);
+
+
+static inline
+void calcRgbdEquationCoeffs(double* C, double dIdx, double dIdy, const Point3f& p3d, double fx, double fy)
+{
+    double invz = 1. / p3d.z,
+        v0 = dIdx * fx * invz,
+        v1 = dIdy * fy * invz,
+        v2 = -(v0 * p3d.x + v1 * p3d.y) * invz;
+
+    C[0] = -p3d.z * v1 + p3d.y * v2;
+    C[1] = p3d.z * v0 - p3d.x * v2;
+    C[2] = -p3d.y * v0 + p3d.x * v1;
+    C[3] = v0;
+    C[4] = v1;
+    C[5] = v2;
+}
+
+static inline
+void calcRgbdEquationCoeffsRotation(double* C, double dIdx, double dIdy, const Point3f& p3d, double fx, double fy)
+{
+    double invz = 1. / p3d.z,
+        v0 = dIdx * fx * invz,
+        v1 = dIdy * fy * invz,
+        v2 = -(v0 * p3d.x + v1 * p3d.y) * invz;
+    C[0] = -p3d.z * v1 + p3d.y * v2;
+    C[1] = p3d.z * v0 - p3d.x * v2;
+    C[2] = -p3d.y * v0 + p3d.x * v1;
+}
+
+static inline
+void calcRgbdEquationCoeffsTranslation(double* C, double dIdx, double dIdy, const Point3f& p3d, double fx, double fy)
+{
+    double invz = 1. / p3d.z,
+        v0 = dIdx * fx * invz,
+        v1 = dIdy * fy * invz,
+        v2 = -(v0 * p3d.x + v1 * p3d.y) * invz;
+    C[0] = v0;
+    C[1] = v1;
+    C[2] = v2;
+}
+
+typedef
+void (*CalcRgbdEquationCoeffsPtr)(double*, double, double, const Point3f&, double, double);
+
+static inline
+void calcICPEquationCoeffs(double* C, const Point3f& p0, const Vec3f& n1)
+{
+    C[0] = -p0.z * n1[1] + p0.y * n1[2];
+    C[1] = p0.z * n1[0] - p0.x * n1[2];
+    C[2] = -p0.y * n1[0] + p0.x * n1[1];
+    C[3] = n1[0];
+    C[4] = n1[1];
+    C[5] = n1[2];
+}
+
+static inline
+void calcICPEquationCoeffsRotation(double* C, const Point3f& p0, const Vec3f& n1)
+{
+    C[0] = -p0.z * n1[1] + p0.y * n1[2];
+    C[1] = p0.z * n1[0] - p0.x * n1[2];
+    C[2] = -p0.y * n1[0] + p0.x * n1[1];
+}
+
+static inline
+void calcICPEquationCoeffsTranslation(double* C, const Point3f& /*p0*/, const Vec3f& n1)
+{
+    C[0] = n1[0];
+    C[1] = n1[1];
+    C[2] = n1[2];
+}
+
+typedef
+void (*CalcICPEquationCoeffsPtr)(double*, const Point3f&, const Vec3f&);
+
+
+
+
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame);
 bool prepareRGBFrameBase(OdometryFrame& frame);
 bool prepareRGBFrameSrc (OdometryFrame& frame);
@@ -77,7 +159,14 @@ template<typename TMat>
 void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel);
 
 
-
+static
+bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
+    const OdometryFrame srcFrame,
+    const OdometryFrame dstFrame,
+    const Matx33f& cameraMatrix,
+    float maxDepthDiff, const std::vector<int>& iterCounts,
+    double maxTranslation, double maxRotation,
+    int method, int transfromType);
 
 
 
