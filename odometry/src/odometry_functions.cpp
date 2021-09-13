@@ -123,9 +123,6 @@ bool prepareRGBFrameDst(OdometryFrame& frame)
     setPyramids(frame, OdometryFramePyramidType::PYR_DIX, dxpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_DIY, dypyramids);
     
-    imshow("img", ipyramids[1]);
-    imshow("dx", dxpyramids[1]);
-    waitKey(10000);
     return true;
 }
 

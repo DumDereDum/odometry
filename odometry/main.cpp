@@ -42,6 +42,23 @@ void displayOdometryPyrs(String name, OdometryFrame odf, OdometryFramePyramidTyp
     }
 }
 
+void displaySobel(OdometryFrame odf)
+{
+    size_t nLevels = odf.getPyramidLevels(OdometryFramePyramidType::PYR_DIX);
+    for (size_t l = 0; l < nLevels; l++)
+    {
+        Mat dx, dy;
+        Mat abs_grad_x, abs_grad_y;
+        Mat grad;
+        odf.getPyramidAt(dx, OdometryFramePyramidType::PYR_DIX, l);
+        odf.getPyramidAt(dy, OdometryFramePyramidType::PYR_DIY, l);
+        convertScaleAbs(dx, abs_grad_x);
+        convertScaleAbs(dy, abs_grad_y);
+        addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+        imshow("Sobel", grad);
+        waitKey(1000);
+    }
+}
 
 Size frameSize = Size(640, 480);
 float fx = 525.f;
@@ -54,7 +71,7 @@ Matx33f intr = Matx33f(fx, 0, cx,
 //float depthFactor = 5000;
 float depthFactor = 0.1;
 
-bool display = false;
+bool display = true;
 bool icp     = false;
 bool rgb     = true;
 bool rgbd    = false;
@@ -132,8 +149,7 @@ int main(int argc, char** argv)
             displayOdometryPyrs("PYR_IMAGE", odf, OdometryFramePyramidType::PYR_IMAGE);
             displayOdometryPyrs("PYR_DEPTH", odf, OdometryFramePyramidType::PYR_DEPTH);
             displayOdometryPyrs("PYR_MASK", odf, OdometryFramePyramidType::PYR_MASK);
-            displayOdometryPyrs("PYR_DIX", odf, OdometryFramePyramidType::PYR_DIX);
-            displayOdometryPyrs("PYR_DIY" ,odf, OdometryFramePyramidType::PYR_DIY);
+            displaySobel(odf);
         }
         od_rgb.compute(odf, odf, Rt.matrix);
 
