@@ -71,10 +71,11 @@ Matx33f intr = Matx33f(fx, 0, cx,
 //float depthFactor = 5000;
 float depthFactor = 0.1;
 
-bool display = true;
+bool display = false;
 bool icp     = false;
-bool rgb     = true;
+bool rgb     = false;
 bool rgbd    = false;
+bool settings= true;
 
 int main(int argc, char** argv)
 {
@@ -87,6 +88,16 @@ int main(int argc, char** argv)
                        frame_curr = Ptr<OdometryFrame>(new OdometryFrame());
     Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
     */
+
+    if (settings)
+    {
+        OdometrySettings ods;
+        const std::vector<int> ic = { 7, 7, 7, 7 };
+        ods.setIterCounts(ic);
+        Mat icr;
+        ods.getIterCounts(icr);
+        std::cout << icr << std::endl;
+    }
 
     if (icp)
     {
