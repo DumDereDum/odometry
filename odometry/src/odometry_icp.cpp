@@ -20,7 +20,7 @@ bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 {
 	std::cout << "OdometryICP::compute()" << std::endl;
 	this->compute_corresps();
-	this->compute_Rt();
+	this->compute_Rt(srcFrame, dstFrame, Rt);
 	return true;
 }
 
@@ -37,7 +37,7 @@ bool OdometryICP::compute_corresps() const
 	return true;
 }
 
-bool OdometryICP::compute_Rt() const
+bool OdometryICP::compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryICP::compute_Rt()" << std::endl;
 	return true;

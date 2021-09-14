@@ -71,11 +71,13 @@ Matx33f intr = Matx33f(fx, 0, cx,
 //float depthFactor = 5000;
 float depthFactor = 0.1;
 
-bool display = true;
+bool display = false;
 bool icp     = false;
-bool rgb     = true;
+bool rgb     = false;
 bool rgbd    = false;
 bool settings= false;
+
+bool rgb_final = true;
 
 int main(int argc, char** argv)
 {
@@ -88,6 +90,37 @@ int main(int argc, char** argv)
                        frame_curr = Ptr<OdometryFrame>(new OdometryFrame());
     Ptr<Odometry> odometry = Odometry::create(string(argv[3]) + "Odometry");
     */
+
+    if (rgb_final)
+    {
+        Mat depth0 = scene->depth(poses[1]);
+        Mat rgb0 = scene->rgb(poses[1]);
+        Mat depth1 = scene->depth(poses[2]);
+        Mat rgb1 = scene->rgb(poses[2]);
+
+        OdometrySettings ods;
+        Odometry od_rgb = Odometry(OdometryType::RGB, ods);
+        OdometryFrame odfSrc = od_rgb.createOdometryFrame();
+        OdometryFrame odfDst = od_rgb.createOdometryFrame();
+
+        imshow("rgb0", rgb0);
+        imshow("rgb1", rgb1);
+        waitKey(5000);
+        
+        odfSrc.setImage(rgb0);
+        odfSrc.setDepth(depth0);
+        odfSrc.findMask(depth0);
+
+        odfDst.setImage(rgb1);
+        odfDst.setDepth(depth1);
+        odfDst.findMask(depth1);
+
+        Mat Rt;
+        od_rgb.prepareFrames(odfSrc, odfDst);
+        od_rgb.compute(odfSrc, odfDst, Rt);
+
+        std::cout << "RESULT: \n " << Rt << std::endl;
+    }
 
     if (settings)
     {
@@ -153,17 +186,18 @@ int main(int argc, char** argv)
         //ods.setCameraMatrix(Mat());
         //Odometry od_rgb = Odometry(OdometryType::RGB, ods);
         
-        Affine3f Rt;
+        Mat Rt;
         od_rgb.prepareFrames(odf, odf);
         if (display)
         {
             displayOdometryPyrs("PYR_IMAGE", odf, OdometryFramePyramidType::PYR_IMAGE);
             displayOdometryPyrs("PYR_DEPTH", odf, OdometryFramePyramidType::PYR_DEPTH);
             displayOdometryPyrs("PYR_MASK", odf, OdometryFramePyramidType::PYR_MASK);
+            //displayOdometryPyrs("PYR_TEXMASK", odf, OdometryFramePyramidType::PYR_TEXMASK);
             displaySobel(odf);
         }
-        od_rgb.compute(odf, odf, Rt.matrix);
-
+        od_rgb.compute(odf, odf, Rt);
+        std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
     if (rgbd)

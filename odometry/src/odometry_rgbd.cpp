@@ -20,7 +20,7 @@ bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Outpu
 {
 	std::cout << "OdometryRGBD::compute()" << std::endl;
 	this->compute_corresps();
-	this->compute_Rt();
+	this->compute_Rt(srcFrame, dstFrame, Rt);
 	return true;
 }
 
@@ -36,7 +36,7 @@ bool OdometryRGBD::compute_corresps() const
 	return true;
 }
 
-bool OdometryRGBD::compute_Rt() const
+bool OdometryRGBD::compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
 	std::cout << "OdometryRGBD::compute_Rt()" << std::endl;
 	return true;

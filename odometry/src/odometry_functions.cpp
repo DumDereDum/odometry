@@ -6,12 +6,18 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 
+#include <opencv2/core/dualquaternion.hpp>
+#include <opencv2/calib3d.hpp>
+
 using namespace cv;
 
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
 {
     std::cout << "prepareRGBFrame()" << std::endl;
+
     prepareRGBFrameBase(srcFrame, settings);
+    prepareRGBFrameBase(dstFrame, settings);
+    
     prepareRGBFrameSrc(srcFrame, settings);
     prepareRGBFrameDst(dstFrame, settings);
 
@@ -119,11 +125,23 @@ bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
     std::cout << "prepareRGBFrameDst()" << std::endl;
     typedef Mat TMat;
     std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
-    std::vector<TMat> dxpyramids, dypyramids;
+    std::vector<TMat> mpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_MASK);
+    std::vector<TMat> dxpyramids, dypyramids, tmpyramids;
+
+    Mat _minGradientMagnitudes;
+    std::vector<float> minGradientMagnitudes;
+    settings.getMinGradientMagnitudes(_minGradientMagnitudes);
+    for (int i = 0; i < _minGradientMagnitudes.size().height; i++)
+        minGradientMagnitudes.push_back(_minGradientMagnitudes.at<int>(i));
+
     preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids, settings.getSobelSize());
     preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids, settings.getSobelSize());
+    preparePyramidTexturedMask(dxpyramids, dypyramids, minGradientMagnitudes,
+        mpyramids, settings.getMaxPointsPart(), tmpyramids, settings.getSobelScale());
+    
     setPyramids(frame, OdometryFramePyramidType::PYR_DIX, dxpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_DIY, dypyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_TEXMASK, tmpyramids);
     
     return true;
 }
@@ -306,16 +324,96 @@ void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputO
     }
 }
 
+static
+void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfArrays pyramid_dI_dy,
+    InputArray minGradMagnitudes, InputArrayOfArrays pyramidMask, double maxPointsPart,
+    InputOutputArrayOfArrays pyramidTexturedMask, double sobelScale)
+{
+    size_t didxLevels = pyramid_dI_dx.size(-1).width;
+    size_t texLevels = pyramidTexturedMask.size(-1).width;
+    if (!pyramidTexturedMask.empty())
+    {
+        if (texLevels != didxLevels)
+            CV_Error(Error::StsBadSize, "Incorrect size of pyramidTexturedMask.");
+
+        for (size_t i = 0; i < texLevels; i++)
+        {
+            CV_Assert(pyramidTexturedMask.size((int)i) == pyramid_dI_dx.size((int)i));
+            CV_Assert(pyramidTexturedMask.type((int)i) == CV_8UC1);
+        }
+    }
+    else
+    {
+        CV_Assert(minGradMagnitudes.type() == CV_32F);
+        Mat_<float> mgMags = minGradMagnitudes.getMat();
+
+        const float sobelScale2_inv = 1.f / (float)(sobelScale * sobelScale);
+        pyramidTexturedMask.create((int)didxLevels, 1, CV_8UC1, -1);
+        for (size_t i = 0; i < didxLevels; i++)
+        {
+            const float minScaledGradMagnitude2 = mgMags((int)i) * mgMags((int)i) * sobelScale2_inv;
+            const Mat& dIdx = pyramid_dI_dx.getMat((int)i);
+            const Mat& dIdy = pyramid_dI_dy.getMat((int)i);
+
+            Mat texturedMask(dIdx.size(), CV_8UC1, Scalar(0));
+
+            for (int y = 0; y < dIdx.rows; y++)
+            {
+                const short* dIdx_row = dIdx.ptr<short>(y);
+                const short* dIdy_row = dIdy.ptr<short>(y);
+                uchar* texturedMask_row = texturedMask.ptr<uchar>(y);
+                for (int x = 0; x < dIdx.cols; x++)
+                {
+                    float magnitude2 = static_cast<float>(dIdx_row[x] * dIdx_row[x] + dIdy_row[x] * dIdy_row[x]);
+                    if (magnitude2 >= minScaledGradMagnitude2)
+                        texturedMask_row[x] = 255;
+                }
+            }
+            Mat texMask = texturedMask & pyramidMask.getMat((int)i);
+
+            randomSubsetOfMask(texMask, (float)maxPointsPart);
+            pyramidTexturedMask.getMatRef((int)i) = texMask;
+        }
+    }
+}
 
 static
+void randomSubsetOfMask(InputOutputArray _mask, float part)
+{
+    const int minPointsCount = 1000; // minimum point count (we can process them fast)
+    const int nonzeros = countNonZero(_mask);
+    const int needCount = std::max(minPointsCount, int(_mask.total() * part));
+    if (needCount < nonzeros)
+    {
+        RNG rng;
+        Mat mask = _mask.getMat();
+        Mat subset(mask.size(), CV_8UC1, Scalar(0));
+
+        int subsetSize = 0;
+        while (subsetSize < needCount)
+        {
+            int y = rng(mask.rows);
+            int x = rng(mask.cols);
+            if (mask.at<uchar>(y, x))
+            {
+                subset.at<uchar>(y, x) = 255;
+                mask.at<uchar>(y, x) = 0;
+                subsetSize++;
+            }
+        }
+        _mask.assign(subset);
+    }
+}
+
 bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                          const OdometryFrame srcFrame,
                          const OdometryFrame dstFrame,
                          const Matx33f& cameraMatrix,
                          float maxDepthDiff, const std::vector<int>& iterCounts,
-                         double maxTranslation, double maxRotation,
-                         int method, int transfromType)
+                         double maxTranslation, double maxRotation, double sobelScale,
+                         OdometryType method, OdometryTransformType transfromType)
 {
+    std::cout << "RGBDICPOdometryImpl()" << std::endl;
     int transformDim = -1;
     CalcRgbdEquationCoeffsPtr rgbdEquationFuncPtr = 0;
     CalcICPEquationCoeffsPtr icpEquationFuncPtr = 0;
@@ -339,7 +437,7 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     default:
         CV_Error(Error::StsBadArg, "Incorrect transformation type");
     }
-/*
+
     const int minOverdetermScale = 20;
     const int minCorrespsCount = minOverdetermScale * transformDim;
 
@@ -352,6 +450,7 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     bool isOk = false;
     for(int level = (int)iterCounts.size() - 1; level >= 0; level--)
     {
+
         const Matx33f& levelCameraMatrix = pyramidCameraMatrix[level];
         const Matx33f& levelCameraMatrix_inv = levelCameraMatrix.inv(DECOMP_SVD);
         const Mat srcLevelDepth, dstLevelDepth;
@@ -371,21 +470,21 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             Mat resultRt_inv = resultRt.inv(DECOMP_SVD);
 
             const Mat pyramidMask;
-            srcFrame->getPyramidAt(pyramidMask, OdometryFramePyramidType::PYR_MASK, level);
+            srcFrame.getPyramidAt(pyramidMask, OdometryFramePyramidType::PYR_MASK, level);
 
-            if(method & RGBD_ODOMETRY)
+            if(method == OdometryType::RGB)
             {
                 const Mat pyramidTexturedMask;
-                dstFrame->getPyramidAt(pyramidTexturedMask, OdometryFramePyramidType::PYR_TEXMASK, level);
+                dstFrame.getPyramidAt(pyramidTexturedMask, OdometryFramePyramidType::PYR_TEXMASK, level);
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
                                 srcLevelDepth, pyramidMask, dstLevelDepth, pyramidTexturedMask,
                                 maxDepthDiff, corresps_rgbd);
             }
 
-            if(method & ICP_ODOMETRY)
+            if(method == OdometryType::ICP)
             {
                 const Mat pyramidNormalsMask;
-                dstFrame->getPyramidAt(pyramidNormalsMask, OdometryFramePyramidType::PYR_NORMMASK, level);
+                dstFrame.getPyramidAt(pyramidNormalsMask, OdometryFramePyramidType::PYR_NORMMASK, level);
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
                                 srcLevelDepth, pyramidMask, dstLevelDepth, pyramidNormalsMask,
                                 maxDepthDiff, corresps_icp);
@@ -395,17 +494,17 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 break;
 
             const Mat srcPyrCloud;
-            srcFrame->getPyramidAt(srcPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
+            srcFrame.getPyramidAt(srcPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
 
 
             Mat AtA(transformDim, transformDim, CV_64FC1, Scalar(0)), AtB(transformDim, 1, CV_64FC1, Scalar(0));
             if(corresps_rgbd.rows >= minCorrespsCount)
             {
                 const Mat srcPyrImage, dstPyrImage, dstPyrIdx, dstPyrIdy;
-                srcFrame->getPyramidAt(srcPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
-                dstFrame->getPyramidAt(dstPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
-                dstFrame->getPyramidAt(dstPyrIdx, OdometryFramePyramidType::PYR_DIX, level);
-                dstFrame->getPyramidAt(dstPyrIdy, OdometryFramePyramidType::PYR_DIY, level);
+                srcFrame.getPyramidAt(srcPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
+                dstFrame.getPyramidAt(dstPyrImage, OdometryFramePyramidType::PYR_IMAGE, level);
+                dstFrame.getPyramidAt(dstPyrIdx, OdometryFramePyramidType::PYR_DIX, level);
+                dstFrame.getPyramidAt(dstPyrIdy, OdometryFramePyramidType::PYR_DIY, level);
                 calcRgbdLsmMatrices(srcPyrImage, srcPyrCloud, resultRt, dstPyrImage, dstPyrIdx, dstPyrIdy,
                                     corresps_rgbd, fx, fy, sobelScale,
                                     AtA_rgbd, AtB_rgbd, rgbdEquationFuncPtr, transformDim);
@@ -416,8 +515,8 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             if(corresps_icp.rows >= minCorrespsCount)
             {
                 const Mat dstPyrCloud, dstPyrNormals;
-                dstFrame->getPyramidAt(dstPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
-                dstFrame->getPyramidAt(dstPyrNormals, OdometryFramePyramidType::PYR_NORM, level);
+                dstFrame.getPyramidAt(dstPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
+                dstFrame.getPyramidAt(dstPyrNormals, OdometryFramePyramidType::PYR_NORM, level);
                 calcICPLsmMatrices(srcPyrCloud, resultRt, dstPyrCloud, dstPyrNormals,
                                    corresps_icp, AtA_icp, AtB_icp, icpEquationFuncPtr, transformDim);
                 AtA += AtA_icp;
@@ -428,13 +527,13 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             if(!solutionExist)
                 break;
 
-            if(transfromType == Odometry::ROTATION)
+            if(transfromType == OdometryTransformType::ROTATION)
             {
                 Mat tmp(6, 1, CV_64FC1, Scalar(0));
                 ksi.copyTo(tmp.rowRange(0,3));
                 ksi = tmp;
             }
-            else if(transfromType == Odometry::TRANSLATION)
+            else if(transfromType == OdometryTransformType::TRANSLATION)
             {
                 Mat tmp(6, 1, CV_64FC1, Scalar(0));
                 ksi.copyTo(tmp.rowRange(3,6));
@@ -444,8 +543,12 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             computeProjectiveMatrix(ksi, currRt);
             resultRt = currRt * resultRt;
             isOk = true;
+       
         }
+
     }
+
+
     _Rt.create(resultRt.size(), resultRt.type());
     Mat Rt = _Rt.getMat();
     resultRt.copyTo(Rt);
@@ -462,6 +565,296 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     }
 
     return isOk;
-*/
+}
+
+
+void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
+    const Mat& depth0, const Mat& validMask0,
+    const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
+    Mat& _corresps)
+{
+    CV_Assert(Rt.type() == CV_64FC1);
+
+    Mat corresps(depth1.size(), CV_16SC2, Scalar::all(-1));
+
+    Matx33d K(_K), K_inv(_K_inv);
+    Rect r(0, 0, depth1.cols, depth1.rows);
+    Mat Kt = Rt(Rect(3, 0, 1, 3)).clone();
+    Kt = K * Kt;
+    const double* Kt_ptr = Kt.ptr<const double>();
+
+    AutoBuffer<float> buf(3 * (depth1.cols + depth1.rows));
+    float* KRK_inv0_u1 = buf.data();
+    float* KRK_inv1_v1_plus_KRK_inv2 = KRK_inv0_u1 + depth1.cols;
+    float* KRK_inv3_u1 = KRK_inv1_v1_plus_KRK_inv2 + depth1.rows;
+    float* KRK_inv4_v1_plus_KRK_inv5 = KRK_inv3_u1 + depth1.cols;
+    float* KRK_inv6_u1 = KRK_inv4_v1_plus_KRK_inv5 + depth1.rows;
+    float* KRK_inv7_v1_plus_KRK_inv8 = KRK_inv6_u1 + depth1.cols;
+    {
+        Mat R = Rt(Rect(0, 0, 3, 3)).clone();
+
+        Mat KRK_inv = K * R * K_inv;
+        const double* KRK_inv_ptr = KRK_inv.ptr<const double>();
+        for (int u1 = 0; u1 < depth1.cols; u1++)
+        {
+            KRK_inv0_u1[u1] = (float)(KRK_inv_ptr[0] * u1);
+            KRK_inv3_u1[u1] = (float)(KRK_inv_ptr[3] * u1);
+            KRK_inv6_u1[u1] = (float)(KRK_inv_ptr[6] * u1);
+        }
+
+        for (int v1 = 0; v1 < depth1.rows; v1++)
+        {
+            KRK_inv1_v1_plus_KRK_inv2[v1] = (float)(KRK_inv_ptr[1] * v1 + KRK_inv_ptr[2]);
+            KRK_inv4_v1_plus_KRK_inv5[v1] = (float)(KRK_inv_ptr[4] * v1 + KRK_inv_ptr[5]);
+            KRK_inv7_v1_plus_KRK_inv8[v1] = (float)(KRK_inv_ptr[7] * v1 + KRK_inv_ptr[8]);
+        }
+    }
+
+    int correspCount = 0;
+    for (int v1 = 0; v1 < depth1.rows; v1++)
+    {
+        const float* depth1_row = depth1.ptr<float>(v1);
+        const uchar* mask1_row = selectMask1.ptr<uchar>(v1);
+        for (int u1 = 0; u1 < depth1.cols; u1++)
+        {
+            float d1 = depth1_row[u1];
+            if (mask1_row[u1])
+            {
+                CV_DbgAssert(!cvIsNaN(d1));
+                float transformed_d1 = static_cast<float>(d1 * (KRK_inv6_u1[u1] + KRK_inv7_v1_plus_KRK_inv8[v1]) +
+                    Kt_ptr[2]);
+                if (transformed_d1 > 0)
+                {
+                    float transformed_d1_inv = 1.f / transformed_d1;
+                    int u0 = cvRound(transformed_d1_inv * (d1 * (KRK_inv0_u1[u1] + KRK_inv1_v1_plus_KRK_inv2[v1]) +
+                        Kt_ptr[0]));
+                    int v0 = cvRound(transformed_d1_inv * (d1 * (KRK_inv3_u1[u1] + KRK_inv4_v1_plus_KRK_inv5[v1]) +
+                        Kt_ptr[1]));
+
+                    if (r.contains(Point(u0, v0)))
+                    {
+                        float d0 = depth0.at<float>(v0, u0);
+                        if (validMask0.at<uchar>(v0, u0) && std::abs(transformed_d1 - d0) <= maxDepthDiff)
+                        {
+                            CV_DbgAssert(!cvIsNaN(d0));
+                            Vec2s& c = corresps.at<Vec2s>(v0, u0);
+                            if (c[0] != -1)
+                            {
+                                int exist_u1 = c[0], exist_v1 = c[1];
+
+                                float exist_d1 = (float)(depth1.at<float>(exist_v1, exist_u1) *
+                                    (KRK_inv6_u1[exist_u1] + KRK_inv7_v1_plus_KRK_inv8[exist_v1]) + Kt_ptr[2]);
+
+                                if (transformed_d1 > exist_d1)
+                                    continue;
+                            }
+                            else
+                                correspCount++;
+
+                            c = Vec2s((short)u1, (short)v1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    _corresps.create(correspCount, 1, CV_32SC4);
+    Vec4i* corresps_ptr = _corresps.ptr<Vec4i>();
+    for (int v0 = 0, i = 0; v0 < corresps.rows; v0++)
+    {
+        const Vec2s* corresps_row = corresps.ptr<Vec2s>(v0);
+        for (int u0 = 0; u0 < corresps.cols; u0++)
+        {
+            const Vec2s& c = corresps_row[u0];
+            if (c[0] != -1)
+                corresps_ptr[i++] = Vec4i(u0, v0, c[0], c[1]);
+        }
+    }
+}
+
+static
+void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
+    const Mat& image1, const Mat& dI_dx1, const Mat& dI_dy1,
+    const Mat& corresps, double fx, double fy, double sobelScaleIn,
+    Mat& AtA, Mat& AtB, CalcRgbdEquationCoeffsPtr func, int transformDim)
+{
+    AtA = Mat(transformDim, transformDim, CV_64FC1, Scalar(0));
+    AtB = Mat(transformDim, 1, CV_64FC1, Scalar(0));
+    double* AtB_ptr = AtB.ptr<double>();
+
+    const int correspsCount = corresps.rows;
+
+    CV_Assert(Rt.type() == CV_64FC1);
+    const double* Rt_ptr = Rt.ptr<const double>();
+
+    AutoBuffer<float> diffs(correspsCount);
+    float* diffs_ptr = diffs.data();
+
+    const Vec4i* corresps_ptr = corresps.ptr<Vec4i>();
+
+    double sigma = 0;
+    for (int correspIndex = 0; correspIndex < corresps.rows; correspIndex++)
+    {
+        const Vec4i& c = corresps_ptr[correspIndex];
+        int u0 = c[0], v0 = c[1];
+        int u1 = c[2], v1 = c[3];
+
+        diffs_ptr[correspIndex] = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
+            static_cast<int>(image1.at<uchar>(v1, u1)));
+        sigma += diffs_ptr[correspIndex] * diffs_ptr[correspIndex];
+    }
+    sigma = std::sqrt(sigma / correspsCount);
+
+    std::vector<double> A_buf(transformDim);
+    double* A_ptr = &A_buf[0];
+
+    for (int correspIndex = 0; correspIndex < corresps.rows; correspIndex++)
+    {
+        const Vec4i& c = corresps_ptr[correspIndex];
+        int u0 = c[0], v0 = c[1];
+        int u1 = c[2], v1 = c[3];
+
+        double w = sigma + std::abs(diffs_ptr[correspIndex]);
+        w = w > DBL_EPSILON ? 1. / w : 1.;
+
+        double w_sobelScale = w * sobelScaleIn;
+
+        const Point3f& p0 = cloud0.at<Point3f>(v0, u0);
+        Point3f tp0;
+        tp0.x = (float)(p0.x * Rt_ptr[0] + p0.y * Rt_ptr[1] + p0.z * Rt_ptr[2] + Rt_ptr[3]);
+        tp0.y = (float)(p0.x * Rt_ptr[4] + p0.y * Rt_ptr[5] + p0.z * Rt_ptr[6] + Rt_ptr[7]);
+        tp0.z = (float)(p0.x * Rt_ptr[8] + p0.y * Rt_ptr[9] + p0.z * Rt_ptr[10] + Rt_ptr[11]);
+
+        func(A_ptr,
+            w_sobelScale * dI_dx1.at<short int>(v1, u1),
+            w_sobelScale * dI_dy1.at<short int>(v1, u1),
+            tp0, fx, fy);
+
+        for (int y = 0; y < transformDim; y++)
+        {
+            double* AtA_ptr = AtA.ptr<double>(y);
+            for (int x = y; x < transformDim; x++)
+                AtA_ptr[x] += A_ptr[y] * A_ptr[x];
+
+            AtB_ptr[y] += A_ptr[y] * w * diffs_ptr[correspIndex];
+        }
+    }
+
+    for (int y = 0; y < transformDim; y++)
+        for (int x = y + 1; x < transformDim; x++)
+            AtA.at<double>(x, y) = AtA.at<double>(y, x);
+}
+
+static
+void calcICPLsmMatrices(const Mat& cloud0, const Mat& Rt,
+    const Mat& cloud1, const Mat& normals1,
+    const Mat& corresps,
+    Mat& AtA, Mat& AtB, CalcICPEquationCoeffsPtr func, int transformDim)
+{
+    AtA = Mat(transformDim, transformDim, CV_64FC1, Scalar(0));
+    AtB = Mat(transformDim, 1, CV_64FC1, Scalar(0));
+    double* AtB_ptr = AtB.ptr<double>();
+
+    const int correspsCount = corresps.rows;
+
+    CV_Assert(Rt.type() == CV_64FC1);
+    const double* Rt_ptr = Rt.ptr<const double>();
+
+    AutoBuffer<float> diffs(correspsCount);
+    float* diffs_ptr = diffs.data();
+
+    AutoBuffer<Point3f> transformedPoints0(correspsCount);
+    Point3f* tps0_ptr = transformedPoints0.data();
+
+    const Vec4i* corresps_ptr = corresps.ptr<Vec4i>();
+
+    double sigma = 0;
+    for (int correspIndex = 0; correspIndex < corresps.rows; correspIndex++)
+    {
+        const Vec4i& c = corresps_ptr[correspIndex];
+        int u0 = c[0], v0 = c[1];
+        int u1 = c[2], v1 = c[3];
+
+        const Point3f& p0 = cloud0.at<Point3f>(v0, u0);
+        Point3f tp0;
+        tp0.x = (float)(p0.x * Rt_ptr[0] + p0.y * Rt_ptr[1] + p0.z * Rt_ptr[2] + Rt_ptr[3]);
+        tp0.y = (float)(p0.x * Rt_ptr[4] + p0.y * Rt_ptr[5] + p0.z * Rt_ptr[6] + Rt_ptr[7]);
+        tp0.z = (float)(p0.x * Rt_ptr[8] + p0.y * Rt_ptr[9] + p0.z * Rt_ptr[10] + Rt_ptr[11]);
+
+        Vec3f n1 = normals1.at<Vec3f>(v1, u1);
+        Point3f v = cloud1.at<Point3f>(v1, u1) - tp0;
+
+        tps0_ptr[correspIndex] = tp0;
+        diffs_ptr[correspIndex] = n1[0] * v.x + n1[1] * v.y + n1[2] * v.z;
+        sigma += diffs_ptr[correspIndex] * diffs_ptr[correspIndex];
+    }
+
+    sigma = std::sqrt(sigma / correspsCount);
+
+    std::vector<double> A_buf(transformDim);
+    double* A_ptr = &A_buf[0];
+    for (int correspIndex = 0; correspIndex < corresps.rows; correspIndex++)
+    {
+        const Vec4i& c = corresps_ptr[correspIndex];
+        int u1 = c[2], v1 = c[3];
+
+        double w = sigma + std::abs(diffs_ptr[correspIndex]);
+        w = w > DBL_EPSILON ? 1. / w : 1.;
+
+        func(A_ptr, tps0_ptr[correspIndex], normals1.at<Vec3f>(v1, u1) * w);
+
+        for (int y = 0; y < transformDim; y++)
+        {
+            double* AtA_ptr = AtA.ptr<double>(y);
+            for (int x = y; x < transformDim; x++)
+                AtA_ptr[x] += A_ptr[y] * A_ptr[x];
+
+            AtB_ptr[y] += A_ptr[y] * w * diffs_ptr[correspIndex];
+        }
+    }
+
+    for (int y = 0; y < transformDim; y++)
+        for (int x = y + 1; x < transformDim; x++)
+            AtA.at<double>(x, y) = AtA.at<double>(y, x);
+}
+
+
+static
+bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x)
+{
+    double det = determinant(AtA);
+
+    if (fabs(det) < detThreshold || cvIsNaN(det) || cvIsInf(det))
+        return false;
+
+    solve(AtA, AtB, x, DECOMP_CHOLESKY);
+
     return true;
+}
+
+static
+void computeProjectiveMatrix(const Mat& ksi, Mat& Rt)
+{
+    CV_Assert(ksi.size() == Size(1, 6) && ksi.type() == CV_64FC1);
+
+    const double* ksi_ptr = ksi.ptr<const double>();
+    // 0.5 multiplication is here because (dual) quaternions keep half an angle/twist inside
+    Matx44d matdq = (DualQuatd(0, ksi_ptr[0], ksi_ptr[1], ksi_ptr[2],
+        0, ksi_ptr[3], ksi_ptr[4], ksi_ptr[5]) * 0.5).exp().toMat(QUAT_ASSUME_UNIT);
+    Mat(matdq).copyTo(Rt);
+}
+
+
+static
+bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double maxRotation)
+{
+    double translation = norm(deltaRt(Rect(3, 0, 1, 3)));
+
+    Mat rvec;
+    Rodrigues(deltaRt(Rect(0, 0, 3, 3)), rvec);
+
+    double rotation = norm(rvec) * 180. / CV_PI;
+
+    return translation <= maxTranslation && rotation <= maxRotation;
 }

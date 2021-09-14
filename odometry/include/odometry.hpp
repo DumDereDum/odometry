@@ -20,7 +20,7 @@ class OdometryImpl
 {
 private:
     virtual bool compute_corresps() const = 0;
-    virtual bool compute_Rt() const = 0;
+    virtual bool compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFramem, OutputArray Rt) const = 0;
     
 public:
     OdometryImpl() {};

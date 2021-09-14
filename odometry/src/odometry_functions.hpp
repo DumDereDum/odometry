@@ -1,12 +1,13 @@
 #ifndef ODOMETRY_FUNCTIONS_HPP
 #define ODOMETRY_FUNCTIONS_HPP
 
-#include "odometry_frame.hpp"
-#include "odometry_settings.hpp"
+#include "../include/odometry.hpp"
+//#include "odometry_frame.hpp"
+//#include "odometry_settings.hpp"
 
 using namespace cv;
 
-enum OdometryTransformType
+enum class OdometryTransformType
 {
     ROTATION = 1, TRANSLATION = 2, RIGID_BODY_MOTION = 4
 };
@@ -159,16 +160,46 @@ void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vect
 template<typename TMat>
 void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel, int sobelSize);
 
+static
+void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfArrays pyramid_dI_dy,
+    InputArray minGradMagnitudes, InputArrayOfArrays pyramidMask, double maxPointsPart,
+    InputOutputArrayOfArrays pyramidTexturedMask, double sobelScale);
 
 static
+void randomSubsetOfMask(InputOutputArray _mask, float part);
+
+static
+void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
+    const Mat& image1, const Mat& dI_dx1, const Mat& dI_dy1,
+    const Mat& corresps, double fx, double fy, double sobelScaleIn,
+    Mat& AtA, Mat& AtB, CalcRgbdEquationCoeffsPtr func, int transformDim);
+
+static
+void calcICPLsmMatrices(const Mat& cloud0, const Mat& Rt,
+    const Mat& cloud1, const Mat& normals1,
+    const Mat& corresps,
+    Mat& AtA, Mat& AtB, CalcICPEquationCoeffsPtr func, int transformDim);
+
+static
+bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x);
+
+static
+void computeProjectiveMatrix(const Mat& ksi, Mat& Rt);
+
+static
+bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double maxRotation);
+
 bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     const OdometryFrame srcFrame,
     const OdometryFrame dstFrame,
     const Matx33f& cameraMatrix,
     float maxDepthDiff, const std::vector<int>& iterCounts,
-    double maxTranslation, double maxRotation,
-    int method, int transfromType);
+    double maxTranslation, double maxRotation, double sobelScale,
+    OdometryType method, OdometryTransformType transfromType);
 
-
+void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
+    const Mat& depth0, const Mat& validMask0,
+    const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
+    Mat& _corresps);
 
 #endif //ODOMETRY_FUNCTIONS_HPP

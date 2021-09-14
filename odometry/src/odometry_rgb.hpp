@@ -9,7 +9,7 @@ private:
 	OdometrySettings settings;
 
 	virtual bool compute_corresps() const override;
-	virtual bool compute_Rt() const override;
+	virtual bool compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 public:
 	OdometryRGB(OdometrySettings settings);
 	~OdometryRGB();
