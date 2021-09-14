@@ -98,14 +98,21 @@ int main(int argc, char** argv)
         Mat depth1 = scene->depth(poses[2]);
         Mat rgb1 = scene->rgb(poses[2]);
 
+        float fx, fy, cx, cy;
+        fx = fy = 525.f;
+        cx = depth0.size().width  / 2 - 0.5f;
+        cy = depth0.size().height / 2 - 0.5f;
+        Matx33f cameraMatrix(fx, 0, cx, 0, fy, cy, 0, 0, 1);
+
         OdometrySettings ods;
+        ods.setCameraMatrix(cameraMatrix);
         Odometry od_rgb = Odometry(OdometryType::RGB, ods);
         OdometryFrame odfSrc = od_rgb.createOdometryFrame();
         OdometryFrame odfDst = od_rgb.createOdometryFrame();
 
-        imshow("rgb0", rgb0);
-        imshow("rgb1", rgb1);
-        waitKey(5000);
+        //imshow("rgb0", rgb0);
+        //imshow("rgb1", rgb1);
+        //waitKey(5000);
         
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);

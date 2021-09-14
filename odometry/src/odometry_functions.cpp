@@ -132,7 +132,7 @@ bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
     std::vector<float> minGradientMagnitudes;
     settings.getMinGradientMagnitudes(_minGradientMagnitudes);
     for (int i = 0; i < _minGradientMagnitudes.size().height; i++)
-        minGradientMagnitudes.push_back(_minGradientMagnitudes.at<int>(i));
+        minGradientMagnitudes.push_back(_minGradientMagnitudes.at<float>(i));
 
     preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids, settings.getSobelSize());
     preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids, settings.getSobelSize());
@@ -277,7 +277,8 @@ void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraM
         for (size_t i = 0; i < depthSize; i++)
         {
             TMat cloud;
-            depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud, getTMat<TMat>(pyramidMask, (int)i));
+            //depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud, getTMat<TMat>(pyramidMask, (int)i));
+            depthTo3d(getTMat<TMat>(pyramidDepth, (int)i), pyramidCameraMatrix[i], cloud, Mat());
             getTMatRef<TMat>(pyramidCloud, (int)i) = cloud;
 
         }
@@ -347,7 +348,7 @@ void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfAr
         CV_Assert(minGradMagnitudes.type() == CV_32F);
         Mat_<float> mgMags = minGradMagnitudes.getMat();
 
-        const float sobelScale2_inv = 1.f / (float)(sobelScale * sobelScale);
+        const float sobelScale2_inv = 1. / (float)(sobelScale * sobelScale);
         pyramidTexturedMask.create((int)didxLevels, 1, CV_8UC1, -1);
         for (size_t i = 0; i < didxLevels; i++)
         {
@@ -370,7 +371,7 @@ void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfAr
                 }
             }
             Mat texMask = texturedMask & pyramidMask.getMat((int)i);
-
+            
             randomSubsetOfMask(texMask, (float)maxPointsPart);
             pyramidTexturedMask.getMatRef((int)i) = texMask;
         }
@@ -450,7 +451,6 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     bool isOk = false;
     for(int level = (int)iterCounts.size() - 1; level >= 0; level--)
     {
-
         const Matx33f& levelCameraMatrix = pyramidCameraMatrix[level];
         const Matx33f& levelCameraMatrix_inv = levelCameraMatrix.inv(DECOMP_SVD);
         const Mat srcLevelDepth, dstLevelDepth;
@@ -490,9 +490,9 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                                 maxDepthDiff, corresps_icp);
             }
 
+
             if(corresps_rgbd.rows < minCorrespsCount && corresps_icp.rows < minCorrespsCount)
                 break;
-
             const Mat srcPyrCloud;
             srcFrame.getPyramidAt(srcPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
 
@@ -522,11 +522,13 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 AtA += AtA_icp;
                 AtB += AtB_icp;
             }
-
+            std::cout << AtA << std::endl;
+            std::cout << AtB << std::endl;
+            std::cout << std::endl;
             bool solutionExist = solveSystem(AtA, AtB, determinantThreshold, ksi);
             if(!solutionExist)
                 break;
-
+            
             if(transfromType == OdometryTransformType::ROTATION)
             {
                 Mat tmp(6, 1, CV_64FC1, Scalar(0));
@@ -649,8 +651,9 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
                                     continue;
                             }
                             else
+                            {
                                 correspCount++;
-
+                            }
                             c = Vec2s((short)u1, (short)v1);
                         }
                     }

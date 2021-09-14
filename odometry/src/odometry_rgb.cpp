@@ -47,7 +47,6 @@ bool OdometryRGB::compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, Out
 	settings.getIterCounts(miterCounts);
 	for (int i = 0; i < miterCounts.size().height; i++)
 		iterCounts.push_back(miterCounts.at<int>(i));
-
 	RGBDICPOdometryImpl(Rt, Mat(), srcFrame, dstFrame, cameraMatrix,
 		this->settings.getMaxDepthDiff(), iterCounts, this->settings.getMaxTranslation(),
 		this->settings.getMaxRotation(), settings.getSobelScale(), OdometryType::RGB, OdometryTransformType::RIGID_BODY_MOTION);
