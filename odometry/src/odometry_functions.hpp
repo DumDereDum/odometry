@@ -2,6 +2,7 @@
 #define ODOMETRY_FUNCTIONS_HPP
 
 #include "odometry_frame.hpp"
+#include "odometry_settings.hpp"
 
 using namespace cv;
 
@@ -136,10 +137,10 @@ void (*CalcICPEquationCoeffsPtr)(double*, const Point3f&, const Vec3f&);
 
 
 
-bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame);
-bool prepareRGBFrameBase(OdometryFrame& frame);
-bool prepareRGBFrameSrc (OdometryFrame& frame);
-bool prepareRGBFrameDst (OdometryFrame& frame);
+bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
+bool prepareRGBFrameBase(OdometryFrame& frame, OdometrySettings settings);
+bool prepareRGBFrameSrc (OdometryFrame& frame, OdometrySettings settings);
+bool prepareRGBFrameDst (OdometryFrame& frame, OdometrySettings settings);
 
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
 std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype);
@@ -156,7 +157,7 @@ static
 void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vector<Matx33f>& pyramidCameraMatrix);
 
 template<typename TMat>
-void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel);
+void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel, int sobelSize);
 
 
 static

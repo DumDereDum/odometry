@@ -1,8 +1,9 @@
 #include "odometry_rgb.hpp"
 #include "odometry_functions.hpp"
 
-OdometryRGB::OdometryRGB()
+OdometryRGB::OdometryRGB(OdometrySettings _settings)
 {
+	this->settings = _settings;
 }
 
 OdometryRGB::~OdometryRGB()
@@ -26,7 +27,7 @@ bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 bool OdometryRGB::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	std::cout << "OdometryRGB::prepareFrames()" << std::endl;
-	prepareRGBFrame(srcFrame, dstFrame);
+	prepareRGBFrame(srcFrame, dstFrame, this->settings);
 	return true;
 }
 

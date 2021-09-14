@@ -1,8 +1,9 @@
 #include "odometry_rgbd.hpp"
 #include "odometry_functions.hpp"
 
-OdometryRGBD::OdometryRGBD()
+OdometryRGBD::OdometryRGBD(OdometrySettings _settings)
 {
+	this->settings = _settings;
 }
 
 OdometryRGBD::~OdometryRGBD()

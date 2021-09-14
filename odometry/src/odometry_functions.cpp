@@ -8,25 +8,17 @@
 
 using namespace cv;
 
-const cv::Matx33f cameraMatrix = { /* fx, 0, cx*/ 0, 0, 0, /* 0, fy, cy */ 0, 0, 0, /**/ 0, 0, 0 };
-const std::vector<int> iterCounts = { 7, 7, 7, 10 };
-const float minDepth = 0.f;
-const float maxDepth = 4.f;
-static const int sobelSize = 3;
-static const double sobelScale = 1. / 8.;
-static const int normalWinSize = 5;
-
-bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame)
+bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
 {
     std::cout << "prepareRGBFrame()" << std::endl;
-    prepareRGBFrameBase(srcFrame);
-    prepareRGBFrameSrc(srcFrame);
-    prepareRGBFrameDst(dstFrame);
+    prepareRGBFrameBase(srcFrame, settings);
+    prepareRGBFrameSrc(srcFrame, settings);
+    prepareRGBFrameDst(dstFrame, settings);
 
 	return true;
 }
 
-bool prepareRGBFrameBase(OdometryFrame& frame)
+bool prepareRGBFrameBase(OdometryFrame& frame, OdometrySettings settings)
 {
     std::cout << "prepareRGBFrameBase()" << std::endl;
     // Can be transformed into template argument in the future
@@ -83,6 +75,12 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
     }
     checkMask(mask, image.size());
 
+    std::vector<int> iterCounts;
+    Mat miterCounts;
+    settings.getIterCounts(miterCounts);
+    for (int i = 0; i < miterCounts.size().height; i++)
+        iterCounts.push_back(miterCounts.at<int>(i));
+
     std::vector<TMat> ipyramids;
     preparePyramidImage(image, ipyramids, iterCounts.size());
     setPyramids(frame, OdometryFramePyramidType::PYR_IMAGE, ipyramids);
@@ -93,33 +91,37 @@ bool prepareRGBFrameBase(OdometryFrame& frame)
 
     std::vector<TMat> mpyramids;
     std::vector<TMat> npyramids;
-    preparePyramidMask<TMat>(mask, dpyramids, (float)minDepth, (float)maxDepth,
+    preparePyramidMask<TMat>(mask, dpyramids, settings.getMinDepth(), settings.getMaxDepth(),
         npyramids, mpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_MASK, mpyramids);
 
 	return true;
 }
 
-bool prepareRGBFrameSrc(OdometryFrame& frame)
+bool prepareRGBFrameSrc(OdometryFrame& frame, OdometrySettings settings)
 {
     std::cout << "prepareRGBFrameSrc()" << std::endl;
     typedef Mat TMat;
     std::vector<TMat> dpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_DEPTH);
     std::vector<TMat> mpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_MASK);
     std::vector<TMat> cpyramids;
+    Matx33f cameraMatrix;
+    settings.getCameraMatrix(cameraMatrix);
+    
     preparePyramidCloud<TMat>(dpyramids, cameraMatrix, cpyramids, mpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_CLOUD, cpyramids);
-	return true;
+	
+    return true;
 }
 
-bool prepareRGBFrameDst(OdometryFrame& frame)
+bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
 {
     std::cout << "prepareRGBFrameDst()" << std::endl;
     typedef Mat TMat;
     std::vector<TMat> ipyramids = getPyramids(frame, OdometryFramePyramidType::PYR_IMAGE);
     std::vector<TMat> dxpyramids, dypyramids;
-    preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids);
-    preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids);
+    preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids, settings.getSobelSize());
+    preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids, settings.getSobelSize());
     setPyramids(frame, OdometryFramePyramidType::PYR_DIX, dxpyramids);
     setPyramids(frame, OdometryFramePyramidType::PYR_DIY, dypyramids);
     
@@ -279,7 +281,7 @@ void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vect
 
 
 template<typename TMat>
-void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel)
+void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel, int sobelSize)
 {
     size_t imgLevels = pyramidImage.size(-1).width;
     size_t sobelLvls = pyramidSobel.size(-1).width;

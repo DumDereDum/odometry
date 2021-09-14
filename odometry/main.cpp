@@ -71,11 +71,11 @@ Matx33f intr = Matx33f(fx, 0, cx,
 //float depthFactor = 5000;
 float depthFactor = 0.1;
 
-bool display = false;
+bool display = true;
 bool icp     = false;
-bool rgb     = false;
+bool rgb     = true;
 bool rgbd    = false;
-bool settings= true;
+bool settings= false;
 
 int main(int argc, char** argv)
 {

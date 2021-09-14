@@ -6,10 +6,12 @@
 class OdometryRGB : public OdometryImpl
 {
 private:
+	OdometrySettings settings;
+
 	virtual bool compute_corresps() const override;
 	virtual bool compute_Rt() const override;
 public:
-	OdometryRGB();
+	OdometryRGB(OdometrySettings settings);
 	~OdometryRGB();
 
 	virtual OdometryFrame createOdometryFrame() override;

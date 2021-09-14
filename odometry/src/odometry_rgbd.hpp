@@ -6,10 +6,12 @@
 class OdometryRGBD : public OdometryImpl
 {
 private:
+	OdometrySettings settings;
+
 	virtual bool compute_corresps() const override;
 	virtual bool compute_Rt() const override;
 public:
-	OdometryRGBD();
+	OdometryRGBD(OdometrySettings settings);
 	~OdometryRGBD();
 
 	virtual OdometryFrame createOdometryFrame() override;

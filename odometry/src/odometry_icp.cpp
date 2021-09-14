@@ -1,8 +1,9 @@
 #include "odometry_icp.hpp"
 #include "odometry_functions.hpp"
 
-OdometryICP::OdometryICP(/* args */)
+OdometryICP::OdometryICP(OdometrySettings _settings)
 {
+	this->settings = _settings;
 }
 
 OdometryICP::~OdometryICP()

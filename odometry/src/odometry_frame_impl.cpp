@@ -43,19 +43,6 @@ private:
 	TMat mask;
 	TMat normals;
 	std::vector< std::vector<TMat> > pyramids;
-
-	const float maxTranslation = 0.15f;
-	const float maxRotation = 15.f;
-	const float minGradientMagnitude = 10.f;
-	const std::vector<int> iterCounts = { 7, 7, 7, 10 };
-	const cv::Matx33f cameraMatrix = { /* fx, 0, cx*/ 0, 0, 0, /* 0, fy, cy */ 0, 0, 0, /**/ 0, 0, 0 };
-	const float minDepth = 0.f;
-	const float maxDepth = 4.f;
-	const float maxDepthDiff = 0.07f;
-	const float maxPointsPart = 0.07f;
-	//const InputArray minGradientMagnitudes = noArray();
-	std::vector<float> minGradientMagnitudes = std::vector<float>(iterCounts.size(), minGradientMagnitude);
-
 };
 
 OdometryFrame::OdometryFrame(InputArray image)
@@ -64,7 +51,6 @@ OdometryFrame::OdometryFrame(InputArray image)
 	bool useOcl = image.isUMat();
 	bool isNoArray = (&image == &noArray());
 	//if (useOcl && !allEmpty && !isNoArray)
-	std::cout << " allEmpty:" << allEmpty << " useOcl:" << useOcl << " isNoArray:" << isNoArray << std::endl;
 	if (useOcl)
 		this->odometryFrame = makePtr<OdometryFrameImplTMat<UMat>>(image);
 	else

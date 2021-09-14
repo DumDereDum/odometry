@@ -6,10 +6,12 @@
 class OdometryICP : public OdometryImpl
 {
 private:
+	OdometrySettings settings;
+
 	virtual bool compute_corresps() const override;
 	virtual bool compute_Rt() const override;
 public:
-	OdometryICP();
+	OdometryICP(OdometrySettings settings);
 	~OdometryICP();
 
 	virtual OdometryFrame createOdometryFrame() override;

@@ -8,13 +8,13 @@ Odometry::Odometry(OdometryType otype, OdometrySettings settings)
 	switch (otype)
 	{
 	case OdometryType::ICP:
-		this->odometry = makePtr<OdometryICP>();
+		this->odometry = makePtr<OdometryICP>(settings);
 		break;
 	case OdometryType::RGB:
-		this->odometry = makePtr<OdometryRGB>();
+		this->odometry = makePtr<OdometryRGB>(settings);
 		break;
 	case OdometryType::RGBD:
-		this->odometry = makePtr<OdometryRGBD>();
+		this->odometry = makePtr<OdometryRGBD>(settings);
 		break;
 	default:
 		//CV_Error(Error::StsInternal,
