@@ -192,6 +192,7 @@ struct CubeSpheresScene : Scene
         float sphere2 = (float)cv::norm(p - Point3f(0.3f, 1.f, 0.f)) - 0.1f;
         float sphere3 = (float)cv::norm(p - Point3f(0.0f, 1.f, 0.f)) - 0.2f;
         float res = min(min(plane, boxMinusSphere), min(sphere2, sphere3));
+        //float res = min(boxMinusSphere, min(sphere2, sphere3));
 
         return res;
     }

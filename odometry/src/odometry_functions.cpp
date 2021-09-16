@@ -135,7 +135,7 @@ bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
         minGradientMagnitudes.push_back(_minGradientMagnitudes.at<float>(i));
 
     preparePyramidSobel<TMat>(ipyramids, 1, 0, dxpyramids, settings.getSobelSize());
-    preparePyramidSobel<TMat>(ipyramids, 1, 0, dypyramids, settings.getSobelSize());
+    preparePyramidSobel<TMat>(ipyramids, 0, 1, dypyramids, settings.getSobelSize());
     preparePyramidTexturedMask(dxpyramids, dypyramids, minGradientMagnitudes,
         mpyramids, settings.getMaxPointsPart(), tmpyramids, settings.getSobelScale());
     
@@ -415,6 +415,13 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                          OdometryType method, OdometryTransformType transfromType)
 {
     std::cout << "RGBDICPOdometryImpl()" << std::endl;
+    
+    //Mat img0, img1;
+    //srcFrame.getImage(img0);
+    //dstFrame.getImage(img1);
+    //imshow("img0", img0);
+    //imshow("img1", img1);
+    //waitKey(10000);
     int transformDim = -1;
     CalcRgbdEquationCoeffsPtr rgbdEquationFuncPtr = 0;
     CalcICPEquationCoeffsPtr icpEquationFuncPtr = 0;
@@ -508,7 +515,6 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 calcRgbdLsmMatrices(srcPyrImage, srcPyrCloud, resultRt, dstPyrImage, dstPyrIdx, dstPyrIdy,
                                     corresps_rgbd, fx, fy, sobelScale,
                                     AtA_rgbd, AtB_rgbd, rgbdEquationFuncPtr, transformDim);
-
                 AtA += AtA_rgbd;
                 AtB += AtB_rgbd;
             }
@@ -522,9 +528,9 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 AtA += AtA_icp;
                 AtB += AtB_icp;
             }
-            std::cout << AtA << std::endl;
-            std::cout << AtB << std::endl;
-            std::cout << std::endl;
+            //std::cout << AtA << std::endl;
+            //std::cout << AtB << std::endl;
+            //std::cout << std::endl;
             bool solutionExist = solveSystem(AtA, AtB, determinantThreshold, ksi);
             if(!solutionExist)
                 break;
@@ -575,11 +581,16 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
     const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
     Mat& _corresps)
 {
+    //imshow("d0", depth0);
+    //imshow("d1", depth1);
+    //waitKey(10000);
     CV_Assert(Rt.type() == CV_64FC1);
 
     Mat corresps(depth1.size(), CV_16SC2, Scalar::all(-1));
 
     Matx33d K(_K), K_inv(_K_inv);
+    //std::cout << K << std::endl;
+    //std::cout << std::endl;
     Rect r(0, 0, depth1.cols, depth1.rows);
     Mat Kt = Rt(Rect(3, 0, 1, 3)).clone();
     Kt = K * Kt;
@@ -596,12 +607,18 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
         Mat R = Rt(Rect(0, 0, 3, 3)).clone();
 
         Mat KRK_inv = K * R * K_inv;
+        //std::cout << std::endl;
+        //std::cout << K << std::endl;
+        //std::cout << R << std::endl;
+        //std::cout << K_inv << std::endl;
+        //std::cout << KRK_inv << std::endl;
         const double* KRK_inv_ptr = KRK_inv.ptr<const double>();
         for (int u1 = 0; u1 < depth1.cols; u1++)
         {
             KRK_inv0_u1[u1] = (float)(KRK_inv_ptr[0] * u1);
             KRK_inv3_u1[u1] = (float)(KRK_inv_ptr[3] * u1);
             KRK_inv6_u1[u1] = (float)(KRK_inv_ptr[6] * u1);
+            //std::cout << KRK_inv0_u1[u1]<<" " << KRK_inv3_u1[u1] <<" " << KRK_inv6_u1[u1] << std::endl;
         }
 
         for (int v1 = 0; v1 < depth1.rows; v1++)
@@ -625,6 +642,7 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
                 CV_DbgAssert(!cvIsNaN(d1));
                 float transformed_d1 = static_cast<float>(d1 * (KRK_inv6_u1[u1] + KRK_inv7_v1_plus_KRK_inv8[v1]) +
                     Kt_ptr[2]);
+                //std::cout << Vec2i(u1, v1) << " | "  << d1 << "*" << KRK_inv6_u1[u1] << "+" << KRK_inv7_v1_plus_KRK_inv8[v1] << "+" << Kt_ptr[2] << std::endl;
                 if (transformed_d1 > 0)
                 {
                     float transformed_d1_inv = 1.f / transformed_d1;
@@ -632,12 +650,15 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
                         Kt_ptr[0]));
                     int v0 = cvRound(transformed_d1_inv * (d1 * (KRK_inv3_u1[u1] + KRK_inv4_v1_plus_KRK_inv5[v1]) +
                         Kt_ptr[1]));
-
+                    //std::cout << Vec2i(u0, v0) << " " << Vec2i(u1, v1) << std::endl;
                     if (r.contains(Point(u0, v0)))
                     {
                         float d0 = depth0.at<float>(v0, u0);
                         if (validMask0.at<uchar>(v0, u0) && std::abs(transformed_d1 - d0) <= maxDepthDiff)
                         {
+                            //std::cout << d1 << " "<< transformed_d1 << " "<< d0 <<" "<< maxDepthDiff<< std::endl;
+                            //std::cout << Vec2i(v0, u0) << " " << Vec2i(v1, u1) << std::endl;
+                            //std::cout << std::endl;
                             CV_DbgAssert(!cvIsNaN(d0));
                             Vec2s& c = corresps.at<Vec2s>(v0, u0);
                             if (c[0] != -1)
@@ -672,6 +693,9 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
             const Vec2s& c = corresps_row[u0];
             if (c[0] != -1)
                 corresps_ptr[i++] = Vec4i(u0, v0, c[0], c[1]);
+            //if (c[0] != -1)
+            //    std::cout << Vec4i(u0, v0, c[0], c[1]) << std::endl;
+            
         }
     }
 }
@@ -704,7 +728,8 @@ void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
         int u1 = c[2], v1 = c[3];
 
         diffs_ptr[correspIndex] = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
-            static_cast<int>(image1.at<uchar>(v1, u1)));
+                                                     static_cast<int>(image1.at<uchar>(v1, u1)));
+        //std::cout << "diffs_ptr[correspIndex] "<< correspIndex << " " << diffs_ptr[correspIndex] << std::endl;
         sigma += diffs_ptr[correspIndex] * diffs_ptr[correspIndex];
     }
     sigma = std::sqrt(sigma / correspsCount);
@@ -738,12 +763,21 @@ void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
         {
             double* AtA_ptr = AtA.ptr<double>(y);
             for (int x = y; x < transformDim; x++)
+            {
                 AtA_ptr[x] += A_ptr[y] * A_ptr[x];
-
+                //std::cout << correspIndex << " + " << AtA_ptr[x] << " = " << A_ptr[y] << " " << A_ptr[x] << std::endl;
+            }
+            //std::cout << A_ptr[y] << " ";
             AtB_ptr[y] += A_ptr[y] * w * diffs_ptr[correspIndex];
+            //std::cout << correspIndex << " + " << AtB_ptr[y] << " = " << A_ptr[y] << " " << w << " " << diffs_ptr[correspIndex] << std::endl;
+            //std::cout << std::endl;
         }
+        //std::cout << std::endl;
+       
     }
-
+    //std::cout << AtA << std::endl;
+    //std::cout << AtB << std::endl;
+    //std::cout << std::endl;
     for (int y = 0; y < transformDim; y++)
         for (int x = y + 1; x < transformDim; x++)
             AtA.at<double>(x, y) = AtA.at<double>(y, x);
@@ -827,7 +861,8 @@ static
 bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x)
 {
     double det = determinant(AtA);
-
+    //std::cout << AtA << std::endl;
+    //std::cout << "det: " << det << std::endl;
     if (fabs(det) < detThreshold || cvIsNaN(det) || cvIsInf(det))
         return false;
 

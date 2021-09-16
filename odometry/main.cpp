@@ -93,10 +93,10 @@ int main(int argc, char** argv)
 
     if (rgb_final)
     {
-        Mat depth0 = scene->depth(poses[1]);
-        Mat rgb0 = scene->rgb(poses[1]);
-        Mat depth1 = scene->depth(poses[2]);
-        Mat rgb1 = scene->rgb(poses[2]);
+        Mat depth0 = scene->depth(poses[0]);
+        Mat rgb0 = scene->rgb(poses[0]);
+        Mat depth1 = scene->depth(poses[1]);
+        Mat rgb1 = scene->rgb(poses[1]);
 
         float fx, fy, cx, cy;
         fx = fy = 525.f;
@@ -110,10 +110,6 @@ int main(int argc, char** argv)
         OdometryFrame odfSrc = od_rgb.createOdometryFrame();
         OdometryFrame odfDst = od_rgb.createOdometryFrame();
 
-        //imshow("rgb0", rgb0);
-        //imshow("rgb1", rgb1);
-        //waitKey(5000);
-        
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);
         odfSrc.findMask(depth0);
@@ -125,7 +121,6 @@ int main(int argc, char** argv)
         Mat Rt;
         od_rgb.prepareFrames(odfSrc, odfDst);
         od_rgb.compute(odfSrc, odfDst, Rt);
-
         std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
