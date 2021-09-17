@@ -9,7 +9,7 @@ using namespace cv;
 
 enum class OdometryTransformType
 {
-    ROTATION = 1, TRANSLATION = 2, RIGID_BODY_MOTION = 4
+    ROTATION = 1, TRANSLATION = 2, RIGID_TRANSFORMATION = 4
 };
 
 static inline
@@ -171,7 +171,8 @@ void randomSubsetOfMask(InputOutputArray _mask, float part);
 static
 void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
     const Mat& image1, const Mat& dI_dx1, const Mat& dI_dy1,
-    const Mat& corresps, double fx, double fy, double sobelScaleIn,
+    const Mat& corresps, const Mat& diffs, const double sigma,
+    double fx, double fy, double sobelScaleIn,
     Mat& AtA, Mat& AtB, CalcRgbdEquationCoeffsPtr func, int transformDim);
 
 static
@@ -198,8 +199,8 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     OdometryType method, OdometryTransformType transfromType);
 
 void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
-    const Mat& depth0, const Mat& validMask0,
-    const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
-    Mat& _corresps);
+    const Mat& image0, const Mat& depth0, const Mat& validMask0,
+    const Mat& image1, const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
+    Mat& _corresps, Mat& _diffs, double& _sigma);
 
 #endif //ODOMETRY_FUNCTIONS_HPP

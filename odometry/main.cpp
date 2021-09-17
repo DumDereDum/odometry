@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
@@ -120,7 +121,11 @@ int main(int argc, char** argv)
 
         Mat Rt;
         od_rgb.prepareFrames(odfSrc, odfDst);
+        auto t1 = std::chrono::high_resolution_clock::now();
         od_rgb.compute(odfSrc, odfDst, Rt);
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        std::cout << "time: " << ms_int.count() << "ms" << std::endl;
         std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
