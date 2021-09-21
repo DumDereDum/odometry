@@ -117,11 +117,9 @@ int main(int argc, char** argv)
 
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);
-        odfSrc.findMask(depth0);
 
         odfDst.setImage(rgb1);
         odfDst.setDepth(depth1);
-        odfDst.findMask(depth1);
 
         Mat Rt;
         od_rgb.prepareFrames(odfSrc, odfDst);
@@ -154,11 +152,9 @@ int main(int argc, char** argv)
 
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);
-        odfSrc.findMask(depth0);
 
         odfDst.setImage(rgb1);
         odfDst.setDepth(depth1);
-        odfDst.findMask(depth1);
 
         Mat Rt;
         od_icp.prepareFrames(odfSrc, odfDst);
@@ -192,11 +188,9 @@ int main(int argc, char** argv)
 
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);
-        odfSrc.findMask(depth0);
 
         odfDst.setImage(rgb1);
         odfDst.setDepth(depth1);
-        odfDst.findMask(depth1);
 
         Mat Rt;
         od_rgbd.prepareFrames(odfSrc, odfDst);
@@ -239,11 +233,9 @@ int main(int argc, char** argv)
 
         odfSrc.setImage(rgb0);
         odfSrc.setDepth(depth0);
-        odfSrc.findMask(depth0);
 
         odfDst.setImage(rgb1);
         odfDst.setDepth(depth1);
-        odfDst.findMask(depth1);
 
         Mat Rt;
         od_icp.prepareFrames(odfSrc, odfDst);
@@ -264,7 +256,6 @@ int main(int argc, char** argv)
         
         odf.setImage(rgb);
         odf.setDepth(depth);
-        odf.findMask(depth);
         Mat odf_rgb, odf_depth, odf_gray, odf_mask;
         
         if (display)
@@ -303,7 +294,6 @@ int main(int argc, char** argv)
         
         odf.setImage(rgb);
         odf.setDepth(depth);
-        odf.findMask(depth);
         Mat odf_rgb, odf_depth, odf_gray, odf_mask;
 
         if (display)

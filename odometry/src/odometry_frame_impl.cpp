@@ -32,10 +32,8 @@ public:
 	virtual void getPyramidAt(OutputArray img,
 		OdometryFramePyramidType pyrType, size_t level) override;
 
-
-	virtual void findMask(InputArray image) override;
-
 private:
+	void findMask(InputArray image);
 
 	TMat image;
 	TMat imageGray;
@@ -96,6 +94,7 @@ template<typename TMat>
 void OdometryFrameImplTMat<TMat>::getDepth(OutputArray _depth)
 {
 	_depth.assign(this->depth);
+	this->findMask(_depth);
 }
 
 template<typename TMat>
@@ -141,18 +140,6 @@ size_t OdometryFrameImplTMat<TMat>::getPyramidLevels(OdometryFramePyramidType of
 }
 
 template<typename TMat>
-void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
-{
-	Mat depth = _depth.getMat();
-	Mat mask(depth.size(), CV_8UC1, Scalar(255));
-	for (int y = 0; y < depth.rows; y++)
-		for (int x = 0; x < depth.cols; x++)
-			if (cvIsNaN(depth.at<float>(y, x)) || depth.at<float>(y, x) > 10 || depth.at<float>(y, x) <= FLT_EPSILON)
-				mask.at<uchar>(y, x) = 0;
-	this->setMask(mask);
-}
-
-template<typename TMat>
 void OdometryFrameImplTMat<TMat>::setPyramidAt(InputArray  _img, OdometryFramePyramidType pyrType, size_t level)
 {
 	TMat img = getTMat<TMat>(_img);
@@ -164,4 +151,16 @@ void OdometryFrameImplTMat<TMat>::getPyramidAt(OutputArray _img, OdometryFramePy
 {
 	TMat img = pyramids[pyrType][level];
 	_img.assign(img);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::findMask(InputArray _depth)
+{
+	Mat depth = _depth.getMat();
+	Mat mask(depth.size(), CV_8UC1, Scalar(255));
+	for (int y = 0; y < depth.rows; y++)
+		for (int x = 0; x < depth.cols; x++)
+			if (cvIsNaN(depth.at<float>(y, x)) || depth.at<float>(y, x) > 10 || depth.at<float>(y, x) <= FLT_EPSILON)
+				mask.at<uchar>(y, x) = 0;
+	this->setMask(mask);
 }

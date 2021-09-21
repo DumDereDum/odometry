@@ -46,12 +46,6 @@ public:
 		OdometryFramePyramidType pyrType, size_t level) = 0;
 	virtual void getPyramidAt(OutputArray img,
 		OdometryFramePyramidType pyrType, size_t level) = 0;
-
-	virtual void findMask(InputArray image) = 0;
-
-
-private:
-
 };
 
 class OdometryFrame
@@ -76,8 +70,6 @@ public:
 		{ this->odometryFrame->setPyramidAt(img, pyrType, level); }
 	void getPyramidAt(OutputArray img, OdometryFramePyramidType pyrType, size_t level) const
 		{ this->odometryFrame->getPyramidAt(img, pyrType, level); }
-
-	void findMask(InputArray depth) { this->odometryFrame->findMask(depth); }
 };
 
 #endif // !ODOMETRY_FRAME_HPP
