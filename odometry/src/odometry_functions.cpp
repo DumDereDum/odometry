@@ -150,6 +150,24 @@ bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
     return true;
 }
 
+bool prepareRGBDFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
+{
+    //std::cout << "prepareICPFrame()" << std::endl;
+
+    prepareICPFrameBase(srcFrame, settings);
+    prepareICPFrameBase(dstFrame, settings);
+    prepareRGBFrameBase(srcFrame, settings);
+    prepareRGBFrameBase(dstFrame, settings);
+
+    prepareICPFrameSrc(srcFrame, settings);
+    prepareRGBFrameSrc(srcFrame, settings);
+
+    prepareICPFrameDst(dstFrame, settings);
+    prepareRGBFrameDst(dstFrame, settings);
+
+    return true;
+}
+
 bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
 {
     //std::cout << "prepareICPFrame()" << std::endl;
@@ -719,24 +737,24 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             const Mat pyramidMask;
             srcFrame.getPyramidAt(pyramidMask, OdometryFramePyramidType::PYR_MASK, level);
 
-            if(method == OdometryType::RGB)
+            if(method != OdometryType::ICP)
             {
                 const Mat pyramidTexturedMask;
                 dstFrame.getPyramidAt(pyramidTexturedMask, OdometryFramePyramidType::PYR_TEXMASK, level);
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
                                 srcLevelImage, srcLevelDepth, pyramidMask,
                                 dstLevelImage, dstLevelDepth, pyramidTexturedMask, maxDepthDiff,
-                                corresps_rgbd, diffs_rgbd, sigma_rgbd, method);
+                                corresps_rgbd, diffs_rgbd, sigma_rgbd, OdometryType::RGB);
             }
 
-            if(method == OdometryType::ICP)
+            if(method != OdometryType::RGB)
             {
                 const Mat pyramidNormalsMask;
                 dstFrame.getPyramidAt(pyramidNormalsMask, OdometryFramePyramidType::PYR_NORMMASK, level);
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
                     srcLevelDepth, srcLevelDepth, pyramidMask,
                     dstLevelDepth, dstLevelDepth, pyramidNormalsMask, maxDepthDiff,
-                    corresps_icp, diffs_icp, sigma_icp, method);
+                    corresps_icp, diffs_icp, sigma_icp, OdometryType::ICP);
             }
 
 

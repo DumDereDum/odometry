@@ -144,6 +144,7 @@ bool prepareRGBFrameBase(OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameSrc (OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameDst (OdometryFrame& frame, OdometrySettings settings);
 
+bool prepareRGBDFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
 bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
 bool prepareICPFrameBase(OdometryFrame& frame, OdometrySettings settings);
 bool prepareICPFrameSrc (OdometryFrame& frame, OdometrySettings settings);

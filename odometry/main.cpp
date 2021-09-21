@@ -78,8 +78,9 @@ bool rgb     = false;
 bool rgbd    = false;
 bool settings= false;
 
-bool rgb_final = true;
-bool icp_final = true;
+bool rgb_final  = true;
+bool icp_final  = true;
+bool rgbd_final = true;
 
 int main(int argc, char** argv)
 {
@@ -163,6 +164,44 @@ int main(int argc, char** argv)
         od_icp.prepareFrames(odfSrc, odfDst);
         //auto t1 = std::chrono::high_resolution_clock::now();
         od_icp.compute(odfSrc, odfDst, Rt);
+        //auto t2 = std::chrono::high_resolution_clock::now();
+        //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        //std::cout << "time: " << ms_int.count() << "ms" << std::endl;
+        std::cout << "RESULT: \n " << Rt << std::endl;
+    }
+
+    if (rgbd_final)
+    {
+        std::cout << "<< RGBD_Final >>" << std::endl;
+        Mat depth0 = scene->depth(poses[0]);
+        Mat rgb0 = scene->rgb(poses[0]);
+        Mat depth1 = scene->depth(poses[1]);
+        Mat rgb1 = scene->rgb(poses[1]);
+
+        float fx, fy, cx, cy;
+        fx = fy = 525.f;
+        cx = depth0.size().width  / 2 - 0.5f;
+        cy = depth0.size().height / 2 - 0.5f;
+        Matx33f cameraMatrix(fx, 0, cx, 0, fy, cy, 0, 0, 1);
+
+        OdometrySettings ods;
+        ods.setCameraMatrix(cameraMatrix);
+        Odometry od_rgbd = Odometry(OdometryType::RGBD, ods);
+        OdometryFrame odfSrc = od_rgbd.createOdometryFrame();
+        OdometryFrame odfDst = od_rgbd.createOdometryFrame();
+
+        odfSrc.setImage(rgb0);
+        odfSrc.setDepth(depth0);
+        odfSrc.findMask(depth0);
+
+        odfDst.setImage(rgb1);
+        odfDst.setDepth(depth1);
+        odfDst.findMask(depth1);
+
+        Mat Rt;
+        od_rgbd.prepareFrames(odfSrc, odfDst);
+        //auto t1 = std::chrono::high_resolution_clock::now();
+        od_rgbd.compute(odfSrc, odfDst, Rt);
         //auto t2 = std::chrono::high_resolution_clock::now();
         //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
         //std::cout << "time: " << ms_int.count() << "ms" << std::endl;
