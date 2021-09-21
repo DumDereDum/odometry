@@ -79,6 +79,7 @@ bool rgbd    = false;
 bool settings= false;
 
 bool rgb_final = true;
+bool icp_final = true;
 
 int main(int argc, char** argv)
 {
@@ -94,6 +95,8 @@ int main(int argc, char** argv)
 
     if (rgb_final)
     {
+        std::cout << "<< RGB_Final >>" << std::endl;
+
         Mat depth0 = scene->depth(poses[0]);
         Mat rgb0 = scene->rgb(poses[0]);
         Mat depth1 = scene->depth(poses[1]);
@@ -121,11 +124,48 @@ int main(int argc, char** argv)
 
         Mat Rt;
         od_rgb.prepareFrames(odfSrc, odfDst);
-        auto t1 = std::chrono::high_resolution_clock::now();
+        //auto t1 = std::chrono::high_resolution_clock::now();
         od_rgb.compute(odfSrc, odfDst, Rt);
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        std::cout << "time: " << ms_int.count() << "ms" << std::endl;
+        //auto t2 = std::chrono::high_resolution_clock::now();
+        //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        //std::cout << "time: " << ms_int.count() << "ms" << std::endl;
+        std::cout << "RESULT: \n " << Rt << std::endl;
+    }
+    if (icp_final)
+    {
+        std::cout << "<< ICP_Final >>" << std::endl;
+        Mat depth0 = scene->depth(poses[0]);
+        Mat rgb0 = scene->rgb(poses[0]);
+        Mat depth1 = scene->depth(poses[1]);
+        Mat rgb1 = scene->rgb(poses[1]);
+
+        float fx, fy, cx, cy;
+        fx = fy = 525.f;
+        cx = depth0.size().width  / 2 - 0.5f;
+        cy = depth0.size().height / 2 - 0.5f;
+        Matx33f cameraMatrix(fx, 0, cx, 0, fy, cy, 0, 0, 1);
+
+        OdometrySettings ods;
+        ods.setCameraMatrix(cameraMatrix);
+        Odometry od_icp = Odometry(OdometryType::ICP, ods);
+        OdometryFrame odfSrc = od_icp.createOdometryFrame();
+        OdometryFrame odfDst = od_icp.createOdometryFrame();
+
+        odfSrc.setImage(rgb0);
+        odfSrc.setDepth(depth0);
+        odfSrc.findMask(depth0);
+
+        odfDst.setImage(rgb1);
+        odfDst.setDepth(depth1);
+        odfDst.findMask(depth1);
+
+        Mat Rt;
+        od_icp.prepareFrames(odfSrc, odfDst);
+        //auto t1 = std::chrono::high_resolution_clock::now();
+        od_icp.compute(odfSrc, odfDst, Rt);
+        //auto t2 = std::chrono::high_resolution_clock::now();
+        //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        //std::cout << "time: " << ms_int.count() << "ms" << std::endl;
         std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
@@ -141,31 +181,35 @@ int main(int argc, char** argv)
 
     if (icp)
     {
-        Mat depth = scene->depth(poses[1]);
-        Mat rgb = scene->rgb(poses[1]);
-        
+        Mat depth0 = scene->depth(poses[0]);
+        Mat rgb0 = scene->rgb(poses[0]);
+        Mat depth1 = scene->depth(poses[1]);
+        Mat rgb1 = scene->rgb(poses[1]);
+
+        float fx, fy, cx, cy;
+        fx = fy = 525.f;
+        cx = depth0.size().width / 2 - 0.5f;
+        cy = depth0.size().height / 2 - 0.5f;
+        Matx33f cameraMatrix(fx, 0, cx, 0, fy, cy, 0, 0, 1);
+
         OdometrySettings ods;
-        ods.setCameraMatrix(Mat());
+        ods.setCameraMatrix(cameraMatrix);
         Odometry od_icp = Odometry(OdometryType::ICP, ods);
-        //OdometryFrame odf = OdometryFrame(Mat());
-        OdometryFrame odf = od_icp.createOdometryFrame();
+        OdometryFrame odfSrc = od_icp.createOdometryFrame();
+        OdometryFrame odfDst = od_icp.createOdometryFrame();
 
-        odf.setImage(rgb);
-        odf.setDepth(depth);
-        odf.findMask(depth);
-        
-        if (display)
-            displayOdometryFrame(depth, rgb, odf);
+        odfSrc.setImage(rgb0);
+        odfSrc.setDepth(depth0);
+        odfSrc.findMask(depth0);
 
-        /* ICP */
-        //OdometrySettings ods;
-        //ods.setCameraMatrix(Mat());
-        //Odometry od_icp = Odometry(OdometryType::ICP, ods);
-        
-        Affine3f Rt;
-        od_icp.prepareFrames(odf, odf);
-        od_icp.compute(odf, odf, Rt.matrix);
+        odfDst.setImage(rgb1);
+        odfDst.setDepth(depth1);
+        odfDst.findMask(depth1);
 
+        Mat Rt;
+        od_icp.prepareFrames(odfSrc, odfDst);
+        od_icp.compute(odfSrc, odfDst, Rt);
+        std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
     if (rgb)

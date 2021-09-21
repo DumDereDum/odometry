@@ -32,5 +32,9 @@ set(DEPTH_TO_3D
 	odometry/include/depth_to_3d.hpp
 	odometry/include/depth_to_3d.cpp
 )
+set(NORMALS
+	odometry/src/normal.hpp
+	odometry/src/normal.cpp
+)
 
-add_executable(main ${MAIN} ${INCLUDE} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL} ${DEPTH_TO_3D})
+add_executable(main ${MAIN} ${INCLUDE} ${ODOMETRY_SETTINGS} ${ODOMETRY_FRAME} ${ODOMETRY_IMPL} ${DEPTH_TO_3D} ${NORMALS})

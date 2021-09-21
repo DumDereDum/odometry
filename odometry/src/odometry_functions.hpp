@@ -4,6 +4,7 @@
 #include "../include/odometry.hpp"
 //#include "odometry_frame.hpp"
 //#include "odometry_settings.hpp"
+#include <opencv2/imgproc.hpp>
 
 using namespace cv;
 
@@ -143,6 +144,11 @@ bool prepareRGBFrameBase(OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameSrc (OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameDst (OdometryFrame& frame, OdometrySettings settings);
 
+bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
+bool prepareICPFrameBase(OdometryFrame& frame, OdometrySettings settings);
+bool prepareICPFrameSrc (OdometryFrame& frame, OdometrySettings settings);
+bool prepareICPFrameDst (OdometryFrame& frame, OdometrySettings settings);
+
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
 std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype);
 
@@ -201,6 +207,15 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
 void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
     const Mat& image0, const Mat& depth0, const Mat& validMask0,
     const Mat& image1, const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
-    Mat& _corresps, Mat& _diffs, double& _sigma);
+    Mat& _corresps, Mat& _diffs, double& _sigma, OdometryType method);
+
+
+static
+void preparePyramidNormalsMask(InputArray pyramidNormals, InputArray pyramidMask, double maxPointsPart,
+    InputOutputArrayOfArrays /*std::vector<Mat>&*/ pyramidNormalsMask);
+
+static
+void preparePyramidNormals(InputArray normals, InputArrayOfArrays pyramidDepth, InputOutputArrayOfArrays pyramidNormals);
+
 
 #endif //ODOMETRY_FUNCTIONS_HPP

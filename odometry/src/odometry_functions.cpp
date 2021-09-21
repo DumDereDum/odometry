@@ -1,6 +1,7 @@
 #include "odometry_functions.hpp"
 //#include "utils.hpp"
 #include "../include/depth_to_3d.hpp"
+#include "normal.hpp"
 
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -10,6 +11,9 @@
 #include <opencv2/calib3d.hpp>
 
 using namespace cv;
+
+static const int normalWinSize = 5;
+static const RgbdNormals::RgbdNormalsMethod normalMethod = RgbdNormals::RGBD_NORMALS_METHOD_FALS;
 
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
 {
@@ -146,6 +150,163 @@ bool prepareRGBFrameDst(OdometryFrame& frame, OdometrySettings settings)
     return true;
 }
 
+bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
+{
+    //std::cout << "prepareICPFrame()" << std::endl;
+
+    prepareICPFrameBase(srcFrame, settings);
+    prepareICPFrameBase(dstFrame, settings);
+
+    prepareICPFrameSrc(srcFrame, settings);
+    prepareICPFrameDst(dstFrame, settings);
+    
+    return true;
+}
+
+
+bool prepareICPFrameBase(OdometryFrame& frame, OdometrySettings settings)
+{
+    //std::cout << "prepareICPFrameBase()" << std::endl;
+
+    typedef Mat TMat;
+
+    TMat depth;
+    frame.getDepth(depth);
+    if (depth.empty())
+    {
+        if (frame.getPyramidLevels(OdometryFramePyramidType::PYR_DEPTH) > 0)
+        {
+            TMat pyr0;
+            frame.getPyramidAt(pyr0, OdometryFramePyramidType::PYR_DEPTH, 0);
+            frame.setDepth(pyr0);
+        }
+        else if (frame.getPyramidLevels(OdometryFramePyramidType::PYR_CLOUD) > 0)
+        {
+            TMat cloud;
+            frame.getPyramidAt(cloud, OdometryFramePyramidType::PYR_CLOUD, 0);
+            std::vector<TMat> xyz;
+            split(cloud, xyz);
+            frame.setDepth(xyz[2]);
+        }
+        else
+            CV_Error(Error::StsBadSize, "Depth or pyramidDepth or pyramidCloud have to be set.");
+    }
+    checkDepth(depth, depth.size());
+
+    TMat mask;
+    frame.getMask(mask);
+    if (mask.empty() && frame.getPyramidLevels(OdometryFramePyramidType::PYR_MASK) > 0)
+    {
+        TMat pyr0;
+        frame.getPyramidAt(pyr0, OdometryFramePyramidType::PYR_MASK, 0);
+        frame.setMask(pyr0);
+    }
+    checkMask(mask, depth.size());
+
+    std::vector<int> iterCounts;
+    Mat miterCounts;
+    settings.getIterCounts(miterCounts);
+    for (int i = 0; i < miterCounts.size().height; i++)
+        iterCounts.push_back(miterCounts.at<int>(i));
+
+    std::vector<TMat> dpyramids;
+    preparePyramidImage(depth, dpyramids, iterCounts.size());
+    setPyramids(frame, OdometryFramePyramidType::PYR_DEPTH, dpyramids);
+
+    std::vector<TMat> mpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_MASK);
+    std::vector<TMat> cpyramids;
+    Matx33f cameraMatrix;
+    settings.getCameraMatrix(cameraMatrix);
+
+    preparePyramidCloud<TMat>(dpyramids, cameraMatrix, cpyramids, mpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_CLOUD, cpyramids);
+
+    return true;
+}
+
+bool prepareICPFrameSrc(OdometryFrame& frame, OdometrySettings settings)
+{
+    //std::cout << "prepareICPFrameSrc()" << std::endl;
+    
+    typedef Mat TMat;
+
+    TMat mask;
+    frame.getMask(mask);
+
+    std::vector<TMat> dpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_DEPTH);
+    std::vector<TMat> mpyramids;
+    std::vector<TMat> npyramids;// = getPyramids(frame, OdometryFramePyramidType::PYR_NORM);
+    preparePyramidMask<TMat>(mask, dpyramids, settings.getMinDepth(), settings.getMaxDepth(),
+        npyramids, mpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_MASK, mpyramids);
+    //setPyramids(frame, OdometryFramePyramidType::PYR_NORMMASK, npyramids);
+
+    return true;
+}
+
+bool prepareICPFrameDst(OdometryFrame& frame, OdometrySettings settings)
+{
+    //std::cout << "prepareICPFrameDst()" << std::endl;
+
+    typedef Mat TMat;
+
+    Ptr<RgbdNormals> normalsComputer;
+    Matx33f cameraMatrix;
+    settings.getCameraMatrix(cameraMatrix);
+
+    TMat depth, mask, normals;
+    frame.getDepth(depth);
+    frame.getMask(mask);
+    frame.getNormals(normals);
+
+    if (normals.empty())
+    {
+        //std::cout << "getPyramidLevels : " << frame.getPyramidLevels(OdometryFramePyramidType::PYR_NORM) << std::endl;
+        if ( 0 & frame.getPyramidLevels(OdometryFramePyramidType::PYR_NORM))
+        {
+            TMat n0;
+            frame.getPyramidAt(n0, OdometryFramePyramidType::PYR_NORM, 0);
+            frame.setNormals(n0);
+        }
+        else
+        {
+            Matx33f K;
+            if (!normalsComputer.empty())
+                normalsComputer->getK(K);
+            if (normalsComputer.empty() ||
+                normalsComputer->getRows() != depth.rows ||
+                normalsComputer->getCols() != depth.cols ||
+                norm(K, cameraMatrix) > FLT_EPSILON)
+                normalsComputer = RgbdNormals::create(depth.rows,
+                    depth.cols,
+                    depth.depth(),
+                    cameraMatrix,
+                    normalWinSize,
+                    normalMethod);
+            TMat c0;
+            frame.getPyramidAt(c0, OdometryFramePyramidType::PYR_CLOUD, 0);
+            normalsComputer->apply(c0, normals);
+            frame.setNormals(normals);
+        }
+        
+    }
+    std::vector<TMat> npyramids;
+    std::vector<TMat> dpyramids = getPyramids(frame, OdometryFramePyramidType::PYR_DEPTH);
+    preparePyramidNormals(normals, dpyramids, npyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_NORM, npyramids);
+
+    std::vector<TMat> mpyramids;
+    preparePyramidMask<TMat>(mask, dpyramids, settings.getMinDepth(), settings.getMaxDepth(),
+        npyramids, mpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_MASK, mpyramids);
+    
+    std::vector<TMat> nmpyramids;
+    preparePyramidNormalsMask(npyramids, mpyramids, settings.getMaxPointsPart(), nmpyramids);
+    setPyramids(frame, OdometryFramePyramidType::PYR_NORMMASK, nmpyramids);
+
+    return true;
+}
+
 static
 void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount)
 {
@@ -161,6 +322,87 @@ void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage
     }
     else
         buildPyramid(image, pyramidImage, (int)levelCount - 1);
+}
+
+static
+void preparePyramidNormals(InputArray normals, InputArrayOfArrays pyramidDepth, InputOutputArrayOfArrays pyramidNormals)
+{
+    size_t depthLevels = pyramidDepth.size(-1).width;
+    size_t normalsLevels = pyramidNormals.size(-1).width;
+    if (!pyramidNormals.empty())
+    {
+        if (normalsLevels != depthLevels)
+            CV_Error(Error::StsBadSize, "Incorrect size of pyramidNormals.");
+
+        for (size_t i = 0; i < normalsLevels; i++)
+        {
+            CV_Assert(pyramidNormals.size((int)i) == pyramidDepth.size((int)i));
+            CV_Assert(pyramidNormals.type((int)i) == CV_32FC3);
+        }
+    }
+    else
+    {
+        buildPyramid(normals, pyramidNormals, (int)depthLevels - 1);
+        // renormalize normals
+        for (size_t i = 1; i < depthLevels; i++)
+        {
+            Mat& currNormals = pyramidNormals.getMatRef((int)i);
+            for (int y = 0; y < currNormals.rows; y++)
+            {
+                Point3f* normals_row = currNormals.ptr<Point3f>(y);
+                for (int x = 0; x < currNormals.cols; x++)
+                {
+                    double nrm = norm(normals_row[x]);
+                    normals_row[x] *= 1. / nrm;
+                }
+            }
+        }
+    }
+}
+
+static
+void preparePyramidNormalsMask(InputArray pyramidNormals, InputArray pyramidMask, double maxPointsPart,
+    InputOutputArrayOfArrays /*std::vector<Mat>&*/ pyramidNormalsMask)
+{
+    size_t maskLevels = pyramidMask.size(-1).width;
+    size_t norMaskLevels = pyramidNormalsMask.size(-1).width;
+    if (!pyramidNormalsMask.empty())
+    {
+        if (norMaskLevels != maskLevels)
+            CV_Error(Error::StsBadSize, "Incorrect size of pyramidNormalsMask.");
+
+        for (size_t i = 0; i < norMaskLevels; i++)
+        {
+            CV_Assert(pyramidNormalsMask.size((int)i) == pyramidMask.size((int)i));
+            CV_Assert(pyramidNormalsMask.type((int)i) == pyramidMask.type((int)i));
+        }
+    }
+    else
+    {
+        pyramidNormalsMask.create((int)maskLevels, 1, CV_8U, -1);
+        for (size_t i = 0; i < maskLevels; i++)
+        {
+            Mat& normalsMask = pyramidNormalsMask.getMatRef((int)i);
+            normalsMask = pyramidMask.getMat((int)i).clone();
+
+            const Mat normals = pyramidNormals.getMat((int)i);
+            for (int y = 0; y < normalsMask.rows; y++)
+            {
+                const Vec3f* normals_row = normals.ptr<Vec3f>(y);
+                uchar* normalsMask_row = normalsMask.ptr<uchar>(y);
+                for (int x = 0; x < normalsMask.cols; x++)
+                {
+                    Vec3f n = normals_row[x];
+                    if (cvIsNaN(n[0]))
+                    {
+                        CV_DbgAssert(cvIsNaN(n[1]) && cvIsNaN(n[2]));
+                        normalsMask_row[x] = 0;
+                    }
+                }
+            }
+            randomSubsetOfMask(normalsMask, (float)maxPointsPart);
+        }
+    }
 }
 
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage)
@@ -484,7 +726,7 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
                                 srcLevelImage, srcLevelDepth, pyramidMask,
                                 dstLevelImage, dstLevelDepth, pyramidTexturedMask, maxDepthDiff,
-                                corresps_rgbd, diffs_rgbd, sigma_rgbd);
+                                corresps_rgbd, diffs_rgbd, sigma_rgbd, method);
             }
 
             if(method == OdometryType::ICP)
@@ -492,9 +734,9 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
                 const Mat pyramidNormalsMask;
                 dstFrame.getPyramidAt(pyramidNormalsMask, OdometryFramePyramidType::PYR_NORMMASK, level);
                 computeCorresps(levelCameraMatrix, levelCameraMatrix_inv, resultRt_inv,
-                    srcLevelImage, srcLevelDepth, pyramidMask,
-                    dstLevelImage, dstLevelDepth, pyramidNormalsMask, maxDepthDiff,
-                    corresps_icp, diffs_icp, sigma_icp);
+                    srcLevelDepth, srcLevelDepth, pyramidMask,
+                    dstLevelDepth, dstLevelDepth, pyramidNormalsMask, maxDepthDiff,
+                    corresps_icp, diffs_icp, sigma_icp, method);
             }
 
 
@@ -577,7 +819,7 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
 void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
     const Mat& image0, const Mat& depth0, const Mat& validMask0,
     const Mat& image1, const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
-    Mat& _corresps, Mat& _diffs, double& _sigma)
+    Mat& _corresps, Mat& _diffs, double& _sigma, OdometryType method)
 {
     CV_Assert(Rt.type() == CV_64FC1);
 
@@ -657,14 +899,15 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
 
                                 if (transformed_d1 > exist_d1)
                                     continue;
-                                
-                                diff = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
-                                    static_cast<int>(image1.at<uchar>(v1, u1)));
+                                if (method == OdometryType::RGB)
+                                    diff = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
+                                        static_cast<int>(image1.at<uchar>(v1, u1)));
                             }
                             else
                             {
-                                diff = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
-                                                          static_cast<int>(image1.at<uchar>(v1, u1)));
+                                if (method == OdometryType::RGB)
+                                    diff = static_cast<float>(static_cast<int>(image0.at<uchar>(v0, u0)) -
+                                                              static_cast<int>(image1.at<uchar>(v1, u1)));
                                 correspCount++;
                             }
                             c = Vec2s((short)u1, (short)v1);
@@ -694,7 +937,8 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
             if (c[0] != -1)
             {
                 corresps_ptr[i] = Vec4i(u0, v0, c[0], c[1]);
-                diffs_ptr[i] = d;
+                if (method == OdometryType::RGB)
+                    diffs_ptr[i] = d;
                 i++;
             }
         }
