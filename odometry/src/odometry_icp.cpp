@@ -16,14 +16,6 @@ OdometryFrame OdometryICP::createOdometryFrame()
 	return OdometryFrame(Mat());
 }
 
-bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
-{
-	//std::cout << "OdometryICP::compute()" << std::endl;
-	this->compute_corresps();
-	this->compute_Rt(srcFrame, dstFrame, Rt);
-	return true;
-}
-
 bool OdometryICP::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	//std::cout << "OdometryICP::prepareFrames()" << std::endl;
@@ -31,15 +23,9 @@ bool OdometryICP::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 	return true;
 }
 
-bool OdometryICP::compute_corresps() const
+bool OdometryICP::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
-	//std::cout << "OdometryICP::compute_corresps()" << std::endl;
-	return true;
-}
-
-bool OdometryICP::compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
-{
-	//std::cout << "OdometryICP::compute_Rt()" << std::endl;
+	//std::cout << "OdometryICP::compute()" << std::endl;
 	Matx33f cameraMatrix;
 	settings.getCameraMatrix(cameraMatrix);
 	std::vector<int> iterCounts;

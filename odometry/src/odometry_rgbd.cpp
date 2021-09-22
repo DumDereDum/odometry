@@ -16,14 +16,6 @@ OdometryFrame OdometryRGBD::createOdometryFrame()
 	return OdometryFrame(Mat());
 }
 
-bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
-{
-	//std::cout << "OdometryRGBD::compute()" << std::endl;
-	this->compute_corresps();
-	this->compute_Rt(srcFrame, dstFrame, Rt);
-	return true;
-}
-
 bool OdometryRGBD::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	//std::cout << "OdometryRGBD::prepareFrames()" << std::endl;
@@ -31,15 +23,9 @@ bool OdometryRGBD::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 	return true;
 }
 
-bool OdometryRGBD::compute_corresps() const
+bool OdometryRGBD::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
 {
-	//std::cout << "OdometryRGBD::compute_corresps()" << std::endl;
-	return true;
-}
-
-bool OdometryRGBD::compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
-{
-	//std::cout << "OdometryRGBD::compute_Rt()" << std::endl;
+	//std::cout << "OdometryRGBD::compute()" << std::endl;
 	Matx33f cameraMatrix;
 	settings.getCameraMatrix(cameraMatrix);
 	std::vector<int> iterCounts;

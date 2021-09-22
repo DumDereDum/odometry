@@ -8,15 +8,13 @@ class OdometryRGB : public OdometryImpl
 private:
 	OdometrySettings settings;
 
-	virtual bool compute_corresps() const override;
-	virtual bool compute_Rt(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 public:
 	OdometryRGB(OdometrySettings settings);
 	~OdometryRGB();
 
 	virtual OdometryFrame createOdometryFrame() override;
-	virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 	virtual bool prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame);
+	virtual bool compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const override;
 };
 
 #endif //ODOMETRY_RGB_HPP
