@@ -25,6 +25,7 @@ public:
 	virtual void getMask(OutputArray mask) override;
 	virtual void setNormals(InputArray  normals) override;
 	virtual void getNormals(OutputArray normals) override;
+	virtual void   setPyramidLevel(size_t _nLevels, OdometryFramePyramidType oftype) override;
 	virtual void   setPyramidLevels(size_t _nLevels) override;
 	virtual size_t getPyramidLevels(OdometryFramePyramidType oftype) override;
 	virtual void setPyramidAt(InputArray  img,
@@ -119,6 +120,16 @@ template<typename TMat>
 void OdometryFrameImplTMat<TMat>::getNormals(OutputArray _normals)
 {
 	_normals.assign(this->normals);
+}
+
+template<typename TMat>
+void OdometryFrameImplTMat<TMat>::setPyramidLevel(size_t _nLevels, OdometryFramePyramidType oftype)
+{
+	if (oftype < OdometryFramePyramidType::N_PYRAMIDS)
+		pyramids[oftype].resize(_nLevels, TMat());
+	else
+		std::cout << "Incorrect type." << std::endl;
+
 }
 
 template<typename TMat>

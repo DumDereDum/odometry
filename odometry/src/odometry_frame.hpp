@@ -40,6 +40,7 @@ public:
 	virtual void getMask(OutputArray mask) = 0;
 	virtual void setNormals(InputArray  normals) = 0;
 	virtual void getNormals(OutputArray normals) = 0;
+	virtual void   setPyramidLevel(size_t _nLevels, OdometryFramePyramidType oftype) = 0;
 	virtual void   setPyramidLevels(size_t _nLevels) = 0;
 	virtual size_t getPyramidLevels(OdometryFramePyramidType oftype) = 0;
 	virtual void setPyramidAt(InputArray  img,
@@ -64,6 +65,8 @@ public:
 	void getMask(OutputArray mask) const { this->odometryFrame->getMask(mask); }
 	void setNormals(InputArray  normals) { this->odometryFrame->setNormals(normals); }
 	void getNormals(OutputArray normals) const { this->odometryFrame->getNormals(normals); }
+	void setPyramidLevel(size_t _nLevels, OdometryFramePyramidType oftype)
+		{ this->odometryFrame->setPyramidLevel(_nLevels, oftype); }
 	void setPyramidLevels(size_t _nLevels) { this->odometryFrame->setPyramidLevels(_nLevels); }
 	size_t getPyramidLevels(OdometryFramePyramidType oftype) const { return this->odometryFrame->getPyramidLevels(oftype); }
 	void setPyramidAt(InputArray  img, OdometryFramePyramidType pyrType, size_t level)
