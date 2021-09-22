@@ -136,24 +136,25 @@ void calcICPEquationCoeffsTranslation(double* C, const Point3f& /*p0*/, const Ve
 typedef
 void (*CalcICPEquationCoeffsPtr)(double*, const Point3f&, const Vec3f&);
 
-
-
-
+bool prepareRGBDFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
 bool prepareRGBFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
+bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
+
 bool prepareRGBFrameBase(OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameSrc (OdometryFrame& frame, OdometrySettings settings);
 bool prepareRGBFrameDst (OdometryFrame& frame, OdometrySettings settings);
 
-bool prepareRGBDFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
-bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings);
 bool prepareICPFrameBase(OdometryFrame& frame, OdometrySettings settings);
 bool prepareICPFrameSrc (OdometryFrame& frame, OdometrySettings settings);
 bool prepareICPFrameDst (OdometryFrame& frame, OdometrySettings settings);
 
+
 void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArrayOfArrays pyramidImage);
+
 std::vector<Mat> getPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype);
 
-static void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount);
+
+void preparePyramidImage(InputArray image, InputOutputArrayOfArrays pyramidImage, size_t levelCount);
 
 template<typename TMat>
 void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float minDepth, float maxDepth, InputArrayOfArrays pyramidNormal, InputOutputArrayOfArrays pyramidMask);
@@ -161,41 +162,22 @@ void preparePyramidMask(InputArray mask, InputArrayOfArrays pyramidDepth, float 
 template<typename TMat>
 void preparePyramidCloud(InputArrayOfArrays pyramidDepth, const Matx33f& cameraMatrix, InputOutputArrayOfArrays pyramidCloud, InputArrayOfArrays pyramidMask);
 
-static
 void buildPyramidCameraMatrix(const Matx33f& cameraMatrix, int levels, std::vector<Matx33f>& pyramidCameraMatrix);
 
 template<typename TMat>
 void preparePyramidSobel(InputArrayOfArrays pyramidImage, int dx, int dy, InputOutputArrayOfArrays pyramidSobel, int sobelSize);
 
-static
 void preparePyramidTexturedMask(InputArrayOfArrays pyramid_dI_dx, InputArrayOfArrays pyramid_dI_dy,
     InputArray minGradMagnitudes, InputArrayOfArrays pyramidMask, double maxPointsPart,
     InputOutputArrayOfArrays pyramidTexturedMask, double sobelScale);
 
-static
 void randomSubsetOfMask(InputOutputArray _mask, float part);
 
-static
-void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
-    const Mat& image1, const Mat& dI_dx1, const Mat& dI_dy1,
-    const Mat& corresps, const Mat& diffs, const double sigma,
-    double fx, double fy, double sobelScaleIn,
-    Mat& AtA, Mat& AtB, CalcRgbdEquationCoeffsPtr func, int transformDim);
+void preparePyramidNormals(InputArray normals, InputArrayOfArrays pyramidDepth, InputOutputArrayOfArrays pyramidNormals);
 
-static
-void calcICPLsmMatrices(const Mat& cloud0, const Mat& Rt,
-    const Mat& cloud1, const Mat& normals1,
-    const Mat& corresps,
-    Mat& AtA, Mat& AtB, CalcICPEquationCoeffsPtr func, int transformDim);
+void preparePyramidNormalsMask(InputArray pyramidNormals, InputArray pyramidMask, double maxPointsPart,
+    InputOutputArrayOfArrays /*std::vector<Mat>&*/ pyramidNormalsMask);
 
-static
-bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x);
-
-static
-void computeProjectiveMatrix(const Mat& ksi, Mat& Rt);
-
-static
-bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double maxRotation);
 
 bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     const OdometryFrame srcFrame,
@@ -210,13 +192,21 @@ void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
     const Mat& image1, const Mat& depth1, const Mat& selectMask1, float maxDepthDiff,
     Mat& _corresps, Mat& _diffs, double& _sigma, OdometryType method);
 
+void calcRgbdLsmMatrices(const Mat& image0, const Mat& cloud0, const Mat& Rt,
+    const Mat& image1, const Mat& dI_dx1, const Mat& dI_dy1,
+    const Mat& corresps, const Mat& diffs, const double sigma,
+    double fx, double fy, double sobelScaleIn,
+    Mat& AtA, Mat& AtB, CalcRgbdEquationCoeffsPtr func, int transformDim);
 
-static
-void preparePyramidNormalsMask(InputArray pyramidNormals, InputArray pyramidMask, double maxPointsPart,
-    InputOutputArrayOfArrays /*std::vector<Mat>&*/ pyramidNormalsMask);
+void calcICPLsmMatrices(const Mat& cloud0, const Mat& Rt,
+    const Mat& cloud1, const Mat& normals1,
+    const Mat& corresps,
+    Mat& AtA, Mat& AtB, CalcICPEquationCoeffsPtr func, int transformDim);
 
-static
-void preparePyramidNormals(InputArray normals, InputArrayOfArrays pyramidDepth, InputOutputArrayOfArrays pyramidNormals);
+void computeProjectiveMatrix(const Mat& ksi, Mat& Rt);
 
+bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x);
+
+bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double maxRotation);
 
 #endif //ODOMETRY_FUNCTIONS_HPP
