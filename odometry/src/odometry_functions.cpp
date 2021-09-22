@@ -271,7 +271,7 @@ bool prepareICPFrameDst(OdometryFrame& frame, OdometrySettings settings)
     if (normals.empty())
     {
         //std::cout << "getPyramidLevels : " << frame.getPyramidLevels(OdometryFramePyramidType::PYR_NORM) << std::endl;
-        if ( 0 & frame.getPyramidLevels(OdometryFramePyramidType::PYR_NORM))
+        if ( frame.getPyramidLevels(OdometryFramePyramidType::PYR_NORM))
         {
             TMat n0;
             frame.getPyramidAt(n0, OdometryFramePyramidType::PYR_NORM, 0);
@@ -321,7 +321,8 @@ void setPyramids(OdometryFrame& odf, OdometryFramePyramidType oftype, InputArray
     size_t nLevels = pyramidImage.size(-1).width;
     std::vector<Mat> pyramids;
     pyramidImage.getMatVector(pyramids);
-    odf.setPyramidLevels(nLevels);
+    odf.setPyramidLevel(nLevels, oftype);
+    //odf.setPyramidLevels(nLevels);
     for (size_t l = 0; l < nLevels; l++)
     {
         odf.setPyramidAt(pyramids[l], oftype, l);
@@ -701,9 +702,13 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
         const Mat srcLevelDepth, dstLevelDepth;
         const Mat srcLevelImage, dstLevelImage;
         srcFrame.getPyramidAt(srcLevelDepth, OdometryFramePyramidType::PYR_DEPTH, level);
-        srcFrame.getPyramidAt(srcLevelImage, OdometryFramePyramidType::PYR_IMAGE, level);
         dstFrame.getPyramidAt(dstLevelDepth, OdometryFramePyramidType::PYR_DEPTH, level);
-        dstFrame.getPyramidAt(dstLevelImage, OdometryFramePyramidType::PYR_IMAGE, level);
+
+        if (method != OdometryType::ICP)
+        {
+            srcFrame.getPyramidAt(srcLevelImage, OdometryFramePyramidType::PYR_IMAGE, level);
+            dstFrame.getPyramidAt(dstLevelImage, OdometryFramePyramidType::PYR_IMAGE, level);
+        }
 
         const double fx = levelCameraMatrix(0, 0);
         const double fy = levelCameraMatrix(1, 1);
