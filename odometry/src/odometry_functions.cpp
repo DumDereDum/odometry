@@ -15,6 +15,11 @@ using namespace cv;
 static const int normalWinSize = 5;
 static const RgbdNormals::RgbdNormalsMethod normalMethod = RgbdNormals::RGBD_NORMALS_METHOD_FALS;
 
+enum
+{
+    UTSIZE = 27
+};
+
 bool prepareRGBDFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometrySettings settings)
 {
     //std::cout << "prepareICPFrame()" << std::endl;
@@ -46,6 +51,7 @@ bool prepareICPFrame(OdometryFrame& srcFrame, OdometryFrame& dstFrame, OdometryS
     prepareICPFrameBase(dstFrame, settings);
 
     prepareICPFrameSrc(srcFrame, settings);
+    prepareICPFrameDst(srcFrame, settings);
     prepareICPFrameDst(dstFrame, settings);
 
     return true;
@@ -770,11 +776,26 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
             }
             if(corresps_icp.rows >= minCorrespsCount)
             {
-                const Mat dstPyrCloud, dstPyrNormals;
+                const Mat dstPyrCloud, dstPyrNormals, srcPyrNormals;
                 dstFrame.getPyramidAt(dstPyrCloud, OdometryFramePyramidType::PYR_CLOUD, level);
                 dstFrame.getPyramidAt(dstPyrNormals, OdometryFramePyramidType::PYR_NORM, level);
-                calcICPLsmMatrices(srcPyrCloud, resultRt, dstPyrCloud, dstPyrNormals,
-                                   corresps_icp, AtA_icp, AtB_icp, icpEquationFuncPtr, transformDim);
+                srcFrame.getPyramidAt(srcPyrNormals, OdometryFramePyramidType::PYR_NORM, level);
+                //Mat R(resultRt, Rect(0, 0, 3, 3));
+                //Mat t(resultRt, Rect(3, 0, 1, 3));
+                Affine3f pose = Affine3f(Matx44f(resultRt));
+                cv::Matx66f A;
+                cv::Vec6f b;
+                
+                if (false)
+                    calcICPLsmMatrices(srcPyrCloud, resultRt, dstPyrCloud, dstPyrNormals,
+                        corresps_icp, AtA_icp, AtB_icp, icpEquationFuncPtr, transformDim);
+                else
+                {
+                    getAb(cameraMatrix, srcPyrCloud, srcPyrNormals, dstPyrCloud, dstPyrNormals, pose, level, A, b);
+                    AtA_icp = Mat(A);
+                    AtB_icp = Mat(b);
+                }
+
                 AtA += AtA_icp;
                 AtB += AtB_icp;
             }
@@ -1117,4 +1138,187 @@ bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double m
     double rotation = norm(rvec) * 180. / CV_PI;
 
     return translation <= maxTranslation && rotation <= maxRotation;
+}
+
+
+static inline bool fastCheck(const Point3f& p)
+{
+    return !cvIsNaN(p.x);
+}
+
+typedef Matx<float, 6, 7> ABtype;
+
+struct GetAbInvoker : ParallelLoopBody
+{
+    GetAbInvoker(ABtype& _globalAb, Mutex& _mtx,
+        const Points& _oldPts, const Normals& _oldNrm, const Points& _newPts, const Normals& _newNrm,
+        Affine3f _pose, Intr::Projector _proj, float _sqDistanceThresh, float _minCos) :
+        ParallelLoopBody(),
+        globalSumAb(_globalAb), mtx(_mtx),
+        oldPts(_oldPts), oldNrm(_oldNrm), newPts(_newPts), newNrm(_newNrm), pose(_pose),
+        proj(_proj), sqDistanceThresh(_sqDistanceThresh), minCos(_minCos)
+    { }
+
+    virtual void operator ()(const Range& range) const override
+    {
+        float upperTriangle[UTSIZE];
+        for (int i = 0; i < UTSIZE; i++)
+            upperTriangle[i] = 0;
+
+        for (int y = range.start; y < range.end; y++)
+        {
+            const ptype* newPtsRow = newPts[y];
+            const ptype* newNrmRow = newNrm[y];
+
+            for (int x = 0; x < newPts.cols; x++)
+            {
+                Point3f newP = fromPtype(newPtsRow[x]);
+                Point3f newN = fromPtype(newNrmRow[x]);
+
+                Point3f oldP(nan3), oldN(nan3);
+
+                if (!(fastCheck(newP) && fastCheck(newN)))
+                    continue;
+
+                //transform to old coord system
+                newP = pose * newP;
+                newN = pose.rotation() * newN;
+
+                //find correspondence by projecting the point
+                Point2f oldCoords = proj(newP);
+                if (!(oldCoords.x >= 0 && oldCoords.x < oldPts.cols - 1 &&
+                    oldCoords.y >= 0 && oldCoords.y < oldPts.rows - 1))
+                    continue;
+
+                // bilinearly interpolate oldPts and oldNrm under oldCoords point
+                int xi = cvFloor(oldCoords.x), yi = cvFloor(oldCoords.y);
+                float tx = oldCoords.x - xi, ty = oldCoords.y - yi;
+
+                const ptype* prow0 = oldPts[yi + 0];
+                const ptype* prow1 = oldPts[yi + 1];
+
+                Point3f p00 = fromPtype(prow0[xi + 0]);
+                Point3f p01 = fromPtype(prow0[xi + 1]);
+                Point3f p10 = fromPtype(prow1[xi + 0]);
+                Point3f p11 = fromPtype(prow1[xi + 1]);
+
+                //do not fix missing data
+                if (!(fastCheck(p00) && fastCheck(p01) &&
+                    fastCheck(p10) && fastCheck(p11)))
+                    continue;
+
+                const ptype* nrow0 = oldNrm[yi + 0];
+                const ptype* nrow1 = oldNrm[yi + 1];
+
+                Point3f n00 = fromPtype(nrow0[xi + 0]);
+                Point3f n01 = fromPtype(nrow0[xi + 1]);
+                Point3f n10 = fromPtype(nrow1[xi + 0]);
+                Point3f n11 = fromPtype(nrow1[xi + 1]);
+
+                if (!(fastCheck(n00) && fastCheck(n01) &&
+                    fastCheck(n10) && fastCheck(n11)))
+                    continue;
+
+                Point3f p0 = p00 + tx * (p01 - p00);
+                Point3f p1 = p10 + tx * (p11 - p10);
+                oldP = p0 + ty * (p1 - p0);
+
+                Point3f n0 = n00 + tx * (n01 - n00);
+                Point3f n1 = n10 + tx * (n11 - n10);
+                oldN = n0 + ty * (n1 - n0);
+
+                if (!(fastCheck(oldP) && fastCheck(oldN)))
+                    continue;
+
+                //filter by distance
+                Point3f diff = newP - oldP;
+                if (diff.dot(diff) > sqDistanceThresh)
+                {
+                    continue;
+                }
+
+                //filter by angle
+                if (abs(newN.dot(oldN)) < minCos)
+                {
+                    continue;
+                }
+
+                // build point-wise vector ab = [ A | b ]
+
+                //try to optimize
+                Point3f VxN = newP.cross(oldN);
+                float ab[7] = { VxN.x, VxN.y, VxN.z, oldN.x, oldN.y, oldN.z, oldN.dot(-diff) };
+                // build point-wise upper-triangle matrix [ab^T * ab] w/o last row
+                // which is [A^T*A | A^T*b]
+                // and gather sum
+                int pos = 0;
+                for (int i = 0; i < 6; i++)
+                {
+                    for (int j = i; j < 7; j++)
+                    {
+                        upperTriangle[pos++] += ab[i] * ab[j];
+                    }
+                }
+            }
+        }
+
+        ABtype sumAB = ABtype::zeros();
+        int pos = 0;
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = i; j < 7; j++)
+            {
+                sumAB(i, j) = upperTriangle[pos++];
+            }
+        }
+
+
+        AutoLock al(mtx);
+        globalSumAb += sumAB;
+    }
+
+    ABtype& globalSumAb;
+    Mutex& mtx;
+    const Points& oldPts;
+    const Normals& oldNrm;
+    const Points& newPts;
+    const Normals& newNrm;
+    Affine3f pose;
+    const Intr::Projector proj;
+    float sqDistanceThresh;
+    float minCos;
+};
+
+float distanceThreshold = 0.1f;
+float angleThreshold = (float)(30. * CV_PI / 180.);
+
+void getAb(Matx33f cameraMatrix, const Mat& oldPts, const Mat& oldNrm, const Mat& newPts, const Mat& newNrm,
+    cv::Affine3f pose, int level, cv::Matx66f& A, cv::Vec6f& b)
+{
+    CV_Assert(oldPts.size() == oldNrm.size());
+    CV_Assert(newPts.size() == newNrm.size());
+
+    ABtype sumAB = ABtype::zeros();
+    Mutex mutex;
+    const Points  op(oldPts), on(oldNrm);
+    const Normals np(newPts), nn(newNrm);
+    Intr intrinsics(cameraMatrix);
+    GetAbInvoker invoker(sumAB, mutex, op, on, np, nn, pose,
+        intrinsics.scale(level).makeProjector(),
+        distanceThreshold * distanceThreshold, std::cos(angleThreshold));
+    Range range(0, newPts.rows);
+    const int nstripes = -1;
+    parallel_for_(range, invoker, nstripes);
+
+    // splitting AB matrix to A and b
+    for (int i = 0; i < 6; i++)
+    {
+        // augment lower triangle of A by symmetry
+        for (int j = i; j < 6; j++)
+        {
+            A(i, j) = A(j, i) = sumAB(i, j);
+        }
+
+        b(i) = sumAB(i, 6);
+    }
 }

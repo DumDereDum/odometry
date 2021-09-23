@@ -78,9 +78,9 @@ bool rgb     = false;
 bool rgbd    = false;
 bool settings= false;
 
-bool rgb_final  = true;
+bool rgb_final  = false;
 bool icp_final  = true;
-bool rgbd_final = true;
+bool rgbd_final = false;
 
 int main(int argc, char** argv)
 {
@@ -158,11 +158,11 @@ int main(int argc, char** argv)
 
         Mat Rt;
         od_icp.prepareFrames(odfSrc, odfDst);
-        //auto t1 = std::chrono::high_resolution_clock::now();
+        auto t1 = std::chrono::high_resolution_clock::now();
         od_icp.compute(odfSrc, odfDst, Rt);
-        //auto t2 = std::chrono::high_resolution_clock::now();
-        //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        //std::cout << "time: " << ms_int.count() << "ms" << std::endl;
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        std::cout << "time: " << ms_int.count() << "ms" << std::endl;
         std::cout << "RESULT: \n " << Rt << std::endl;
     }
 
