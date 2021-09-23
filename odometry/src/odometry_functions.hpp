@@ -183,9 +183,9 @@ bool RGBDICPOdometryImpl(OutputArray _Rt, const Mat& initRt,
     const OdometryFrame srcFrame,
     const OdometryFrame dstFrame,
     const Matx33f& cameraMatrix,
-    float maxDepthDiff, const std::vector<int>& iterCounts,
+    float maxDepthDiff, float angleThreshold, const std::vector<int>& iterCounts,
     double maxTranslation, double maxRotation, double sobelScale,
-    OdometryType method, OdometryTransformType transfromType);
+    OdometryType method, OdometryTransformType transfromType, OdometryAlgoType algtype);
 
 void computeCorresps(const Matx33f& _K, const Matx33f& _K_inv, const Mat& Rt,
     const Mat& image0, const Mat& depth0, const Mat& validMask0,
@@ -203,14 +203,14 @@ void calcICPLsmMatrices(const Mat& cloud0, const Mat& Rt,
     const Mat& corresps,
     Mat& AtA, Mat& AtB, CalcICPEquationCoeffsPtr func, int transformDim);
 
+void calcICPLsmMatricesFast(Matx33f cameraMatrix, const Mat& oldPts, const Mat& oldNrm, const Mat& newPts, const Mat& newNrm,
+    cv::Affine3f pose, int level, float maxDepthDiff, float angleThreshold, cv::Matx66f& A, cv::Vec6f& b);
+
 void computeProjectiveMatrix(const Mat& ksi, Mat& Rt);
 
 bool solveSystem(const Mat& AtA, const Mat& AtB, double detThreshold, Mat& x);
 
 bool testDeltaTransformation(const Mat& deltaRt, double maxTranslation, double maxRotation);
-
-void getAb(Matx33f cameraMatrix, const Mat& oldPts, const Mat& oldNrm, const Mat& newPts, const Mat& newNrm,
-    cv::Affine3f pose, int level, cv::Matx66f& A, cv::Vec6f& b);
 
 struct Intr
 {

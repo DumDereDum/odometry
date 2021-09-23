@@ -28,14 +28,20 @@ Odometry::~Odometry()
 {
 }
 
-bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt)
-{
-	this->odometry->compute(srcFrame, dstFrame, Rt);
-	return true;
-}
-
 bool Odometry::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 {
 	this->odometry->prepareFrames(srcFrame, dstFrame);
+	return true;
+}
+
+bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt)
+{
+	this->odometry->compute(srcFrame, dstFrame, Rt, OdometryAlgoType::COMMON);
+	return true;
+}
+
+bool Odometry::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt, OdometryAlgoType algtype)
+{
+	this->odometry->compute(srcFrame, dstFrame, Rt, algtype);
 	return true;
 }

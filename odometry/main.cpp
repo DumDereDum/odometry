@@ -73,13 +73,13 @@ Matx33f intr = Matx33f(fx, 0, cx,
 float depthFactor = 0.1;
 
 bool display = false;
-bool icp     = false;
+bool icp     = true;
 bool rgb     = false;
 bool rgbd    = false;
 bool settings= false;
 
 bool rgb_final  = false;
-bool icp_final  = true;
+bool icp_final  = false;
 bool rgbd_final = false;
 
 int main(int argc, char** argv)
@@ -238,9 +238,33 @@ int main(int argc, char** argv)
         odfDst.setDepth(depth1);
 
         Mat Rt;
-        od_icp.prepareFrames(odfSrc, odfDst);
-        od_icp.compute(odfSrc, odfDst, Rt);
-        std::cout << "RESULT: \n " << Rt << std::endl;
+        od_icp.prepareFrames(odfSrc, odfDst);        
+        
+        int n = 100;
+        double icp_common = 0;
+        double icp_fast   = 0;
+        for (int i = 0; i < n; i++)
+        {
+            auto t1 = std::chrono::high_resolution_clock::now();
+            od_icp.compute(odfSrc, odfDst, Rt, OdometryAlgoType::COMMON);
+            auto t2 = std::chrono::high_resolution_clock::now();
+            auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+            icp_common += ms_int.count();
+        }
+
+        for (int i = 0; i < n; i++)
+        {
+            auto t1 = std::chrono::high_resolution_clock::now();
+            od_icp.compute(odfSrc, odfDst, Rt, OdometryAlgoType::FAST);
+            auto t2 = std::chrono::high_resolution_clock::now();
+            auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+            icp_fast += ms_int.count();
+        }
+        
+        std::cout << "icp_common_time: " << icp_common / double(n) << "ms" << std::endl;
+        std::cout << "icp_fast_time:   " << icp_fast / double(n) << "ms" << std::endl;
+    
+    
     }
 
     if (rgb)

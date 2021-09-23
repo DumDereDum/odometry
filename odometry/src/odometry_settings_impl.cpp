@@ -16,6 +16,7 @@ static const int defaultSobelSize = 3;
 static const double defaultSobelScale = 1. / 8.;
 static const int defaultNormalWinSize = 5;
 
+const float defaultAngleThreshold = (float)(30. * CV_PI / 180.);
 const float defaultMaxTranslation = 0.15f;
 const float defaultMaxRotation = 15.f;
 
@@ -49,6 +50,8 @@ public:
 	virtual void setNormalWinSize(int val);
 	virtual int  getNormalWinSize() const;
 
+	virtual void  setAngleThreshold(float val);
+	virtual float getAngleThreshold() const;
 	virtual void  setMaxTranslation(float val);
 	virtual float getMaxTranslation() const;
 	virtual void  setMaxRotation(float val);
@@ -72,12 +75,12 @@ private:
 	double sobelScale;
 	int normalWinSize;
 
+	float angleThreshold;
 	float maxTranslation;
 	float maxRotation;
 
 	float minGradientMagnitude;
 	std::vector<float> minGradientMagnitudes;
-
 };
 
 
@@ -206,6 +209,14 @@ int  OdometrySettingsImplCommon::getNormalWinSize() const
 	return this->normalWinSize;
 }
 
+void  OdometrySettingsImplCommon::setAngleThreshold(float val)
+{
+	this->angleThreshold = val;
+}
+float OdometrySettingsImplCommon::getAngleThreshold() const
+{
+	return this->angleThreshold;
+}
 void  OdometrySettingsImplCommon::setMaxTranslation(float val)
 {
 	this->maxTranslation = val;

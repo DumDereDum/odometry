@@ -23,7 +23,7 @@ bool OdometryRGB::prepareFrames(OdometryFrame srcFrame, OdometryFrame dstFrame)
 	return true;
 }
 
-bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt) const
+bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, OutputArray Rt, OdometryAlgoType algtype) const
 {
 	//std::cout << "OdometryRGB::compute()" << std::endl;
 	Matx33f cameraMatrix;
@@ -34,8 +34,9 @@ bool OdometryRGB::compute(OdometryFrame srcFrame, OdometryFrame dstFrame, Output
 	for (int i = 0; i < miterCounts.size().height; i++)
 		iterCounts.push_back(miterCounts.at<int>(i));
 	RGBDICPOdometryImpl(Rt, Mat(), srcFrame, dstFrame, cameraMatrix,
-		this->settings.getMaxDepthDiff(), iterCounts, this->settings.getMaxTranslation(),
+		this->settings.getMaxDepthDiff(), this->settings.getAngleThreshold(),
+		iterCounts, this->settings.getMaxTranslation(),
 		this->settings.getMaxRotation(), settings.getSobelScale(),
-		OdometryType::RGB, OdometryTransformType::RIGID_TRANSFORMATION);
+		OdometryType::RGB, OdometryTransformType::RIGID_TRANSFORMATION, algtype);
 	return true;
 }

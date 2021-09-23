@@ -34,6 +34,8 @@ public:
 	virtual void setNormalWinSize(int val) = 0;
 	virtual int  getNormalWinSize() const = 0;
 
+	virtual void  setAngleThreshold(float val) = 0;
+	virtual float getAngleThreshold() const = 0;
 	virtual void  setMaxTranslation(float val) = 0;
 	virtual float getMaxTranslation() const = 0;
 	virtual void  setMaxRotation(float val) = 0;
@@ -74,6 +76,8 @@ public:
 	void setNormalWinSize(int val) { this->odometrySettings->setNormalWinSize(val); };
 	int  getNormalWinSize() const { return this->odometrySettings->getNormalWinSize(); };
 
+	void  setAngleThreshold(float val) { this->odometrySettings->setAngleThreshold(val); };
+	float getAngleThreshold() const { return this->odometrySettings->getAngleThreshold(); };
 	void  setMaxTranslation(float val) { this->odometrySettings->setMaxTranslation(val); };
 	float getMaxTranslation() const { return this->odometrySettings->getMaxTranslation(); };
 	void  setMaxRotation(float val) { this->odometrySettings->setMaxRotation(val); };
